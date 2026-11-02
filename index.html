@@ -1172,15 +1172,15 @@ button.mini{font-size:12px;padding:2px 8px}
       <div class="grid2">
         <div class="field"><label for="t_start">出発日</label><input id="t_start" type="date" required></div>
         <div class="field"><label for="t_end">帰着日</label><input id="t_end" type="date" required></div>
-        <div class="field"><label for="t_budget">予算（円）</label><input id="t_budget" type="number" min="0" step="100" inputmode="numeric"></div>
+        <div class="field"><label for="t_budget">予算（円）</label><input id="t_budget" type="number" min="0" step="1" inputmode="numeric"></div>
       </div>
       <fieldset>
         <legend>使った金額（円）</legend>
         <div class="grid2">
-          <div class="field"><label for="t_transport">交通</label><input id="t_transport" type="number" min="0" step="100" inputmode="numeric"></div>
-          <div class="field"><label for="t_lodging">宿</label><input id="t_lodging" type="number" min="0" step="100" inputmode="numeric"></div>
-          <div class="field"><label for="t_food">食事</label><input id="t_food" type="number" min="0" step="100" inputmode="numeric"></div>
-          <div class="field"><label for="t_other">その他</label><input id="t_other" type="number" min="0" step="100" inputmode="numeric"></div>
+          <div class="field"><label for="t_transport">交通</label><input id="t_transport" type="number" min="0" step="1" inputmode="numeric"></div>
+          <div class="field"><label for="t_lodging">宿</label><input id="t_lodging" type="number" min="0" step="1" inputmode="numeric"></div>
+          <div class="field"><label for="t_food">食事</label><input id="t_food" type="number" min="0" step="1" inputmode="numeric"></div>
+          <div class="field"><label for="t_other">その他</label><input id="t_other" type="number" min="0" step="1" inputmode="numeric"></div>
         </div>
         <div class="form-total" id="t_total">合計 ¥0</div>
       </fieldset>
@@ -1206,7 +1206,7 @@ button.mini{font-size:12px;padding:2px 8px}
         <div class="field"><label for="w_pri">どのくらい行きたい？</label>
           <select id="w_pri"><option value="3">絶対行く</option><option value="2">近いうちに</option><option value="1">いつか</option></select></div>
         <div class="field"><label for="w_season">ベストシーズン</label><input id="w_season" placeholder="例：秋"></div>
-        <div class="field"><label for="w_budget">予算の目安（円）</label><input id="w_budget" type="number" min="0" step="1000" inputmode="numeric"></div>
+        <div class="field"><label for="w_budget">予算の目安（円）</label><input id="w_budget" type="number" min="0" step="1" inputmode="numeric"></div>
       </div>
       <div class="err" id="w_err" hidden></div>
       <div class="sheet-actions">
@@ -1333,7 +1333,10 @@ button.mini{font-size:12px;padding:2px 8px}
       const spent = spentOf(t), budget = num(t.budget), d = dayDiff(todayStr, t.start);
       const cs = countriesOf(t);
       const days = Array.isArray(t.days) ? t.days.filter((x) => x && validDate(x.date)) : [];
-      const noStay = days.filter((x) => !x.stay && x.date < t.end).length;
+      const noStayDays = days.filter((x) => !x.stay && x.date < t.end);
+      const noStay = noStayDays.length;
+      const md = (ds) => Number(ds.slice(5, 7)) + "/" + Number(ds.slice(8, 10));
+      const noStayText = noStayDays.slice(0, 4).map((x) => md(x.date)).join("・") + (noStay > 4 ? " ほか" : "") + "の夜";
       const legs = days.flatMap((x) => Array.isArray(x.legs) ? x.legs : []);
       const fact = (label, val, sub, warn) => el("div", { class: "pf" + (warn ? " warn" : "") }, [el("span", { class: "pf-l", text: label }), el("b", { text: val }), sub ? el("span", { class: "pf-s", text: sub }) : null]);
       const main = el("div", { class: "main" }, [
@@ -1346,7 +1349,7 @@ button.mini{font-size:12px;padding:2px 8px}
           el("div", { class: "pf" }, [el("span", { class: "pf-l", text: "日程" }), el("b", { text: stayLabel(t) }), dateRows(t)]),
           fact("入力済みの費用", yen(spent), budget ? "予算 " + yen(budget) + " の " + Math.round(spent / budget * 100) + "%" : "予算は未設定"),
           fact("移動", kmOf(t) ? kmText(kmOf(t)) : "—", legs.length ? legs.length + "区間・地球 約" + (kmOf(t) / 40075).toFixed(2) + "周" : ""),
-          fact("宿", noStay ? "未定 " + noStay + "泊" : "すべて決定", noStay ? "早めに予約を" : "", !!noStay),
+          fact("宿", noStay ? "未定 " + noStay + "泊" : "すべて決定", noStay ? noStayText + "・早めに予約を" : "", !!noStay),
         ]),
         budget ? el("div", { class: "meter" }, [el("i", { class: spent > budget ? "over" : "", style: "width:" + Math.min(100, spent / budget * 100) + "%" })]) : null,
         t.memo ? el("div", { class: "p-memo", text: t.memo }) : null,
@@ -2362,9 +2365,9 @@ button.mini{font-size:12px;padding:2px 8px}
         td(5, {}, [cell(m.dep, { placeholder: "--:--", class: "sc-in sc-time" }, (v) => { m.dep = v; }, r, 5)]),
         td(6, {}, [cell(m.arr, { placeholder: "--:--", class: "sc-in sc-time" }, (v) => { m.arr = v; }, r, 6)]),
         td(7, {}, [cell(m.time, { placeholder: "乗継など", class: "sc-in sc-mid" }, (v) => { m.time = v; }, r, 7)]),
-        td(8, {}, [cell(num(m.price) || "", { type: "number", min: "0", step: "100", inputmode: "numeric", class: "sc-in sc-num" }, (v) => { m.price = num(v); }, r, 8)]),
+        td(8, {}, [cell(num(m.price) || "", { type: "number", min: "0", step: "1", inputmode: "numeric", class: "sc-in sc-num" }, (v) => { m.price = num(v); }, r, 8)]),
         td(9, {}, isRet ? [] : [cell(h.name, { placeholder: "宿の名前", class: "sc-in sc-hotel" }, (v) => { h.name = v; }, r, 9)]),
-        td(10, {}, isRet ? [] : [cell(num(h.price) || "", { type: "number", min: "0", step: "100", inputmode: "numeric", class: "sc-in sc-num" }, (v) => { h.price = num(v); }, r, 10)]),
+        td(10, {}, isRet ? [] : [cell(num(h.price) || "", { type: "number", min: "0", step: "1", inputmode: "numeric", class: "sc-in sc-num" }, (v) => { h.price = num(v); }, r, 10)]),
         td(11, {}, [cell(isRet ? m.memo : s.memo, { placeholder: "メモ", class: "sc-in sc-memo" }, (v) => { if (isRet) m.memo = v; else s.memo = v; }, r, 11)]),
         td(12, { class: "c c-sub sc-auto sc-sub", "data-sub": key }),
         td(13, { class: "c c-act sc-acts" }, ro ? [] : [
@@ -2483,7 +2486,7 @@ button.mini{font-size:12px;padding:2px 8px}
         ]),
         open ? el("div", { class: "pl-grid" }, [
           fld("所要時間（目安）", inp(m.time, { placeholder: "例：3時間" }, (v) => { m.time = v; })),
-          fld("料金（円・目安）", inp(num(m.price) || "", { type: "number", min: "0", step: "100", inputmode: "numeric" }, (v) => { m.price = num(v); })),
+          fld("料金（円・目安）", inp(num(m.price) || "", { type: "number", min: "0", step: "1", inputmode: "numeric" }, (v) => { m.price = num(v); })),
           fld("メモ", inp(m.memo, { placeholder: "例：夜行バスもある" }, (v) => { m.memo = v; }), "wide"),
         ]) : null,
       ]);
@@ -2516,7 +2519,7 @@ button.mini{font-size:12px;padding:2px 8px}
             el("label", { class: "pl-pick" }, [(() => { const c = el("input", { type: "radio", name: "pick-" + i, disabled: ro ? "disabled" : null }); c.checked = !!hh.chosen; c.addEventListener("change", structural(() => { s.hotels.forEach((x, xi) => { x.chosen = xi === hi; }); })); return c; })(), el("span", { text: hh.chosen ? "これにする" : "候補" })]),
             el("div", { class: "pl-grid" }, [
               fld("ホテル名", inp(hh.name, { placeholder: "例：Riad De Vinci" }, (v) => { hh.name = v; }), "wide"),
-              fld("1泊（円）", inp(num(hh.price) || "", { type: "number", min: "0", step: "100", inputmode: "numeric" }, (v) => { hh.price = num(v); })),
+              fld("1泊（円）", inp(num(hh.price) || "", { type: "number", min: "0", step: "1", inputmode: "numeric" }, (v) => { hh.price = num(v); })),
               fld("リンク・メモ", inp(hh.memo, { placeholder: "予約サイトのURLや一言" }, (v) => { hh.memo = v; })),
             ]),
             el("div", { class: "pl-hotel-foot" }, [
