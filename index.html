@@ -685,13 +685,14 @@ button.mc-cell.past{opacity:.72}
 .leg2-note{font-size:13px;color:var(--muted);line-height:1.6}
 .leg-mode{width:26px;height:26px}
 .leg-mode .mi{width:15px;height:15px}
-.day-memo{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;margin:6px 0 8px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,#f5c542 16%,var(--surface));border-left:3px solid #e0a82e;font-size:14px;line-height:1.6}
-.day-memo .dm-k{font-size:11px;font-weight:700;color:#9a6b00;padding-top:2px;flex:none}
-.day-memo .dm-t{flex:1 1 200px;min-width:0;white-space:pre-wrap;overflow-wrap:anywhere}
-.day-memo.editing{display:block}
-.dm-input{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);resize:vertical}
-.dm-acts{display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap}
-.dm-add{margin:2px 0 8px;font-size:12px;color:var(--muted);background:transparent;border:1px dashed var(--line)}
+.day-memo{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;margin:6px 0 8px;padding:8px 12px;border-radius:10px;background:color-mix(in srgb,#f5c542 14%,var(--surface));border-left:3px solid #e0a82e;font-size:14px;line-height:1.6}
+.day-memo .dm-k{font-size:11px;font-weight:700;color:#9a6b00;padding-top:5px;flex:none}
+.day-memo .dm-t{flex:1 1 200px;min-width:0;white-space:pre-wrap;overflow-wrap:anywhere;padding-top:2px}
+.dm-input{flex:1 1 200px;min-width:0;box-sizing:border-box;font:inherit;font-size:16px;line-height:1.55;padding:3px 4px;border:0;border-radius:6px;background:transparent;color:var(--ink);resize:none;overflow:hidden;min-height:30px}
+.dm-input:focus{outline:2px solid color-mix(in srgb,#e0a82e 60%,transparent);background:var(--surface)}
+.dm-input::placeholder{color:color-mix(in srgb,var(--muted) 75%,transparent)}
+.dm-st{flex-basis:100%;font-size:11px;color:var(--muted);min-height:0}
+.dm-st:empty{display:none}
 .legbox{gap:8px;margin-top:10px}
 @keyframes justEdited{0%{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent,#e8a33d) 70%,transparent);background:color-mix(in srgb,var(--accent,#e8a33d) 14%,transparent)}100%{box-shadow:0 0 0 3px transparent;background:transparent}}
 .just-edited{animation:justEdited 2.2s ease-out;border-radius:12px}
@@ -2850,30 +2851,28 @@ button.mini{font-size:12px;padding:2px 8px}
       openItin(t); $(".sheet").scrollTop = sc;
     } }, [el("span", { class: "bk-box", "aria-hidden": "true" }), label]);
   }
-  // a free note for each day: shown under the day's route, edited right there
+  // a free note for each day: an always-there field under the day's route, saved when you leave it
   function dayMemo(t, d) {
-    const box = el("div", { class: "day-memo-wrap" });
-    const show = () => {
-      const has = !!String(d.memo || "").trim();
-      if (!has && !canWrite) { box.replaceChildren(); return; }
-      box.replaceChildren(has
-        ? el("div", { class: "day-memo" }, [el("span", { class: "dm-k", text: "メモ" }), el("div", { class: "dm-t", text: d.memo }), canWrite ? el("button", { type: "button", class: "mini", text: "✎ 直す", onclick: edit }) : null])
-        : el("button", { type: "button", class: "mini dm-add", text: "＋ この日のメモ", onclick: edit }));
+    const cur = String(d.memo || "");
+    if (!canWrite) return cur.trim() ? el("div", { class: "day-memo" }, [el("span", { class: "dm-k", text: "メモ" }), el("div", { class: "dm-t", text: cur })]) : null;
+    const st = el("span", { class: "dm-st" });
+    const ta = el("textarea", { class: "dm-input", rows: "1", "aria-label": "この日のメモ", placeholder: "この日のメモ（タップして入力）" }, [cur]);
+    const grow = () => { ta.style.height = "auto"; ta.style.height = Math.min(320, ta.scrollHeight + 2) + "px"; };
+    let saved = cur, timer = null;
+    const save = async () => {
+      clearTimeout(timer);
+      const v = ta.value.replace(/\s+$/, "");
+      if (v === saved) return;
+      st.textContent = "保存中…";
+      try {
+        await saveDays(t._id, (days) => { const x = days.find((y) => y && y.date === d.date); if (x) x.memo = v; });
+        saved = v; d.memo = v; st.textContent = "保存しました"; setTimeout(() => { if (st.textContent === "保存しました") st.textContent = ""; }, 1500);
+      } catch (err) { st.textContent = "保存できませんでした"; }
     };
-    const edit = () => {
-      const ta = el("textarea", { class: "dm-input", rows: "3", placeholder: "例：両替はスーク前の両替所が良い／ランドリーで洗濯／夕食はリヤドで予約済み" }, [d.memo || ""]);
-      const msg = el("span", { class: "muted", style: "font-size:12px" });
-      const save = async () => {
-        const v = ta.value.trim();
-        msg.textContent = "保存中…";
-        try { await saveDays(t._id, (days) => { const x = days.find((y) => y && y.date === d.date); if (x) x.memo = v; }); d.memo = v; show(); }
-        catch (err) { msg.textContent = "保存できませんでした。もう一度試してください。"; }
-      };
-      box.replaceChildren(el("div", { class: "day-memo editing" }, [ta, el("div", { class: "dm-acts" }, [el("button", { type: "button", class: "primary mini", text: "保存", onclick: save }), el("button", { type: "button", class: "mini", text: "やめる", onclick: show }), msg])]));
-      ta.focus();
-    };
-    show();
-    return box;
+    ta.addEventListener("input", () => { grow(); st.textContent = ""; clearTimeout(timer); timer = setTimeout(save, 1500); });
+    ta.addEventListener("blur", save);
+    requestAnimationFrame(grow);
+    return el("label", { class: "day-memo field-memo" }, [el("span", { class: "dm-k", text: "メモ" }), ta, st]);
   }
   function openItin(t) {
     t = trips.find((x) => x._id === t._id) || t;
