@@ -49,6 +49,7 @@
   .sa-card .go[disabled]{opacity:.6}
   .sa-msg{margin-top:12px;font-size:13px;line-height:1.6;color:#b42318;white-space:pre-wrap}
   .sa-msg.ok{color:#1a7f5a}
+  body:has(#overlay:not([hidden])) .sa-acct,body:has(.sa-modal) .sa-acct{display:none}
   .sa-acct{position:fixed;right:12px;bottom:12px;z-index:9000;display:flex;gap:6px;align-items:center}
   .sa-acct button{padding:8px 12px;border-radius:999px;border:1px solid #d6dedd;background:#fff;color:#18242c;font:inherit;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.12);cursor:pointer}
   .sa-menu{position:fixed;right:12px;bottom:56px;z-index:9001;background:#fff;color:#18242c;border:1px solid #d6dedd;border-radius:14px;padding:8px;box-shadow:0 10px 30px rgba(0,0,0,.18);min-width:230px;font-size:14px}
@@ -684,9 +685,17 @@ button.mc-cell.past{opacity:.72}
 .leg2-note{font-size:13px;color:var(--muted);line-height:1.6}
 .leg-mode{width:26px;height:26px}
 .leg-mode .mi{width:15px;height:15px}
+.day-memo{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;margin:6px 0 8px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,#f5c542 16%,var(--surface));border-left:3px solid #e0a82e;font-size:14px;line-height:1.6}
+.day-memo .dm-k{font-size:11px;font-weight:700;color:#9a6b00;padding-top:2px;flex:none}
+.day-memo .dm-t{flex:1 1 200px;min-width:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.day-memo.editing{display:block}
+.dm-input{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);resize:vertical}
+.dm-acts{display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap}
+.dm-add{margin:4px 0 8px;opacity:.85}
 .legbox{gap:8px;margin-top:10px}
 @keyframes justEdited{0%{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent,#e8a33d) 70%,transparent);background:color-mix(in srgb,var(--accent,#e8a33d) 14%,transparent)}100%{box-shadow:0 0 0 3px transparent;background:transparent}}
 .just-edited{animation:justEdited 2.2s ease-out;border-radius:12px}
+.dur-chip{font-size:12px;font-weight:600;color:var(--ink);background:color-mix(in srgb,var(--sky,#4a90c2) 14%,transparent);border-radius:999px;padding:2px 8px;white-space:nowrap}
 .leg-edit{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
 .itin.wide .legbox > .leg-edit{grid-column:1}
 .clear-old{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.5;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--accent,#e8a33d) 14%,transparent);margin:4px 0 8px}
@@ -1511,12 +1520,13 @@ button.mini{font-size:12px;padding:2px 8px}
       for (const e of es) {
         const legs = legsOf(e);
         if (e.d.route) kids.push(el("div", { class: "mv-route", text: e.d.route }));
+        if (String(e.d.memo || "").trim()) kids.push(el("div", { class: "day-memo" }, [el("span", { class: "dm-k", text: "メモ" }), el("div", { class: "dm-t", text: e.d.memo })]));
         if (!legs.length) kids.push(el("div", { class: "mv-none", text: "移動はありません。ゆっくり観光の日です。" }));
         else kids.push(el("div", { class: "mv-legs" }, legs.map((l, li) => {
           const tk = Array.isArray(l.tickets) ? l.tickets : [];
           const chip = (k, v) => v ? el("span", {}, [k, el("b", { text: v })]) : null;
           return el("div", { class: "mv-leg" }, [
-            el("div", { class: "mv-time" }, [el("div", { class: "dep", text: l.dep || "—:—" }), el("div", { class: "arr", text: l.arr ? "→ " + l.arr + " 着" : "時刻未定" })]),
+            el("div", { class: "mv-time" }, [el("div", { class: "dep", text: l.dep || "—:—" }), el("div", { class: "arr", text: l.arr ? "→ " + l.arr + " 着" : "時刻未定" }), (() => { const r = legDur(l, date); return r ? el("div", { class: "arr", text: "⏱ " + durText(r) }) : null; })()]),
             el("div", { class: "mv-main" }, [
               el("div", { class: "mv-ft", text: (l.from || "") + " ⇒ " + (l.to || "") }),
               el("div", { class: "mv-chips" }, [l.mode ? el("span", { text: l.mode }) : null, chip("便名", l.number), chip("座席", l.seat), chip("予約", l.ref), chip("乗り場", l.terminal)]),
@@ -1545,6 +1555,59 @@ button.mini{font-size:12px;padding:2px 8px}
   const NUM = { MA: "504", ES: "724", PT: "620", QA: "634", SA: "682", JO: "400", TR: "792", GE: "268", TH: "764", LK: "144", VN: "704", CN: "156", UZ: "860", KZ: "398", JP: "392", KR: "410", TW: "158", US: "840", FR: "250", IT: "380", GB: "826", DE: "276", MY: "458", ID: "360", PH: "608", KH: "116", LA: "418", IN: "356", AE: "784", EG: "818" };
   const flag = (c) => /^[A-Z]{2}$/.test(c) ? c : "";
   const countriesOf = (t) => Array.isArray(t.countries) ? t.countries.filter((c) => typeof c === "string" && /^[A-Z]{2}$/.test(c)) : [];
+  // ---------- travel time (time zones from the nearest reference place) ----------
+  const TZ_REF = [
+    [34.7, 135.5, "Asia/Tokyo"], [35.7, 139.7, "Asia/Tokyo"], [43.1, 141.3, "Asia/Tokyo"], [26.2, 127.7, "Asia/Tokyo"], [37.5, 127.0, "Asia/Seoul"],
+    [31.2, 121.5, "Asia/Shanghai"], [39.9, 116.4, "Asia/Shanghai"], [22.3, 114.2, "Asia/Hong_Kong"], [25.0, 121.5, "Asia/Taipei"],
+    [21.0, 105.8, "Asia/Ho_Chi_Minh"], [10.8, 106.7, "Asia/Ho_Chi_Minh"], [13.8, 100.5, "Asia/Bangkok"], [11.6, 104.9, "Asia/Phnom_Penh"], [1.35, 103.8, "Asia/Singapore"], [3.1, 101.7, "Asia/Kuala_Lumpur"], [14.6, 121.0, "Asia/Manila"], [-6.2, 106.8, "Asia/Jakarta"], [-8.7, 115.2, "Asia/Makassar"],
+    [6.9, 79.9, "Asia/Colombo"], [28.6, 77.2, "Asia/Kolkata"], [19.1, 72.9, "Asia/Kolkata"], [27.7, 85.3, "Asia/Kathmandu"], [4.2, 73.5, "Indian/Maldives"],
+    [25.3, 51.5, "Asia/Qatar"], [25.2, 55.3, "Asia/Dubai"], [24.7, 46.7, "Asia/Riyadh"], [21.5, 39.2, "Asia/Riyadh"], [31.9, 35.9, "Asia/Amman"], [29.5, 35.0, "Asia/Amman"], [30.0, 31.2, "Africa/Cairo"], [32.1, 34.8, "Asia/Jerusalem"],
+    [41.0, 29.0, "Europe/Istanbul"], [39.9, 32.9, "Europe/Istanbul"], [38.6, 34.8, "Europe/Istanbul"], [41.7, 44.8, "Asia/Tbilisi"], [40.2, 44.5, "Asia/Yerevan"], [40.4, 49.9, "Asia/Baku"],
+    [41.3, 69.2, "Asia/Tashkent"], [39.7, 66.9, "Asia/Samarkand"], [43.2, 76.9, "Asia/Almaty"], [51.2, 71.4, "Asia/Almaty"], [42.9, 74.6, "Asia/Bishkek"],
+    [33.6, -7.6, "Africa/Casablanca"], [31.6, -8.0, "Africa/Casablanca"], [34.0, -5.0, "Africa/Casablanca"], [35.8, -5.8, "Africa/Casablanca"],
+    [40.4, -3.7, "Europe/Madrid"], [41.4, 2.2, "Europe/Madrid"], [37.4, -6.0, "Europe/Madrid"], [36.7, -4.4, "Europe/Madrid"], [39.5, -0.4, "Europe/Madrid"], [36.1, -5.35, "Europe/Gibraltar"],
+    [38.7, -9.1, "Europe/Lisbon"], [41.2, -8.6, "Europe/Lisbon"], [37.0, -7.9, "Europe/Lisbon"], [51.5, -0.1, "Europe/London"], [53.3, -6.3, "Europe/Dublin"],
+    [48.9, 2.35, "Europe/Paris"], [52.5, 13.4, "Europe/Berlin"], [50.1, 8.7, "Europe/Berlin"], [41.9, 12.5, "Europe/Rome"], [45.5, 9.2, "Europe/Rome"], [52.4, 4.9, "Europe/Amsterdam"], [47.4, 8.5, "Europe/Zurich"], [48.2, 16.4, "Europe/Vienna"], [50.1, 14.4, "Europe/Prague"], [47.5, 19.0, "Europe/Budapest"], [37.98, 23.7, "Europe/Athens"], [55.7, 37.6, "Europe/Moscow"],
+    [40.7, -74.0, "America/New_York"], [34.1, -118.2, "America/Los_Angeles"], [21.3, -157.9, "Pacific/Honolulu"], [13.5, 144.8, "Pacific/Guam"], [-33.9, 151.2, "Australia/Sydney"],
+  ];
+  function tzAt(ll) {
+    if (!Array.isArray(ll) || ll.length < 2) return null;
+    let best = null, bd = Infinity;
+    for (const [la, lo, z] of TZ_REF) { const d = (la - ll[0]) ** 2 + ((lo - ll[1]) * Math.cos(ll[0] * Math.PI / 180)) ** 2; if (d < bd) { bd = d; best = z; } }
+    return bd < 120 ? best : null; // ~10° away: no confident guess
+  }
+  function tzOffsetMin(zone, date) {
+    try {
+      const f = new Intl.DateTimeFormat("en-US", { timeZone: zone, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+      const p = Object.fromEntries(f.formatToParts(date).map((x) => [x.type, x.value]));
+      return Math.round((Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute) - date.getTime()) / 60000);
+    } catch (e) { return null; }
+  }
+  const hm = (x) => { const m = /^(\d{1,2}):(\d{2})/.exec(String(x || "").trim()); return m ? Number(m[1]) * 60 + Number(m[2]) : null; };
+  // minutes from departure to arrival, and whether it is only an estimate
+  function legDur(l, date) {
+    if (!l) return null;
+    const manual = hm(l.dur);
+    if (manual != null && manual > 0) return { min: manual, approx: false };
+    const a = hm(l.dep), b = hm(l.arr);
+    if (a != null && b != null) {
+      let diff = b - a;
+      const zf = tzAt(l.fromLL), zt = tzAt(l.toLL);
+      if (zf && zt && zf !== zt && validDate(date)) {
+        const ref = new Date(date + "T12:00:00Z");
+        const of = tzOffsetMin(zf, ref), ot = tzOffsetMin(zt, ref);
+        if (of != null && ot != null) diff -= ot - of;
+      } else if (isFlight(l) && !(zf && zt)) {
+        if (Math.abs(diff) > 0 && num(l.km) > 1500) return num(l.km) ? { min: Math.round(num(l.km) / 800 * 60 + 30), approx: true } : null;
+      }
+      while (diff <= 0) diff += 1440;
+      while (diff > 1440 * 2) diff -= 1440;
+      return { min: diff, approx: false };
+    }
+    if (isFlight(l) && num(l.km) > 0) return { min: Math.round(num(l.km) / 800 * 60 + 30), approx: true };
+    return null;
+  }
+  const durText = (r) => !r ? "" : (r.approx ? "約" : "") + (r.min >= 60 ? Math.floor(r.min / 60) + "時間" + (r.min % 60 ? (r.min % 60) + "分" : "") : r.min + "分");
   const isFlight = (l) => /航空|エア|ライアン|ペガサス/.test(l.mode || "") || /^[A-Z0-9]{2}\d{2,4}$/.test(l.number || "");
   const legsWithLL = (t) => (Array.isArray(t.days) ? t.days : []).flatMap((d) => (d && Array.isArray(d.legs) ? d.legs : []).filter((l) => Array.isArray(l.fromLL) && Array.isArray(l.toLL)));
   const shortName = (n) => { n = String(n || "").replace(/（.*?）/g, "").trim(); if (/^Porto/.test(n)) return "ポルト"; return n; };
@@ -2787,6 +2850,31 @@ button.mini{font-size:12px;padding:2px 8px}
       openItin(t); $(".sheet").scrollTop = sc;
     } }, [el("span", { class: "bk-box", "aria-hidden": "true" }), label]);
   }
+  // a free note for each day: shown under the day's route, edited right there
+  function dayMemo(t, d) {
+    const box = el("div", { class: "day-memo-wrap" });
+    const show = () => {
+      const has = !!String(d.memo || "").trim();
+      if (!has && !(canWrite && itinEdit)) { box.replaceChildren(); return; }
+      box.replaceChildren(has
+        ? el("div", { class: "day-memo" }, [el("span", { class: "dm-k", text: "メモ" }), el("div", { class: "dm-t", text: d.memo }), canWrite ? el("button", { type: "button", class: "mini", text: "✎ 直す", onclick: edit }) : null])
+        : el("button", { type: "button", class: "mini dm-add", text: "＋ この日のメモ", onclick: edit }));
+    };
+    const edit = () => {
+      const ta = el("textarea", { class: "dm-input", rows: "3", placeholder: "例：両替はスーク前の両替所が良い／ランドリーで洗濯／夕食はリヤドで予約済み" }, [d.memo || ""]);
+      const msg = el("span", { class: "muted", style: "font-size:12px" });
+      const save = async () => {
+        const v = ta.value.trim();
+        msg.textContent = "保存中…";
+        try { await saveDays(t._id, (days) => { const x = days.find((y) => y && y.date === d.date); if (x) x.memo = v; }); d.memo = v; show(); }
+        catch (err) { msg.textContent = "保存できませんでした。もう一度試してください。"; }
+      };
+      box.replaceChildren(el("div", { class: "day-memo editing" }, [ta, el("div", { class: "dm-acts" }, [el("button", { type: "button", class: "primary mini", text: "保存", onclick: save }), el("button", { type: "button", class: "mini", text: "やめる", onclick: show }), msg])]));
+      ta.focus();
+    };
+    show();
+    return box;
+  }
   function openItin(t) {
     t = trips.find((x) => x._id === t._id) || t;
     editing = null; fromWish = null;
@@ -2831,6 +2919,7 @@ button.mini{font-size:12px;padding:2px 8px}
           el("div", { class: "d" }, [validDate(d.date) ? jpDate(d.date) : (d.date || ""), el("small", { text: validDate(d.date) && validDate(t.start) ? (dayDiff(t.start, d.date) + 1) + "日目" : "" })]),
           el("div", {}, [
             el("div", { class: "r", text: d.route || "" }),
+            dayMemo(t, d),
             (() => {
               const co = midStayCheckout(t.days, di); if (!co) return null;
               return el("div", { class: "mismatch" }, [
@@ -2849,6 +2938,7 @@ button.mini{font-size:12px;padding:2px 8px}
                 el("div", { class: "leg2-top" }, [
                   el("span", { class: "leg-mode m-" + modeKind(l), title: MODE_INFO[modeKind(l)].label }, [modeIcon(modeKind(l))]),
                   (l.dep || l.arr) ? el("span", { class: "leg2-time", text: (l.dep || "—") + (l.arr ? " → " + l.arr : "") }) : el("span", { class: "leg2-time muted", text: "時刻未定" }),
+                  (() => { const r = legDur(l, d.date); return r ? el("span", { class: "dur-chip", title: r.approx ? "距離からの目安" : "時差を考えた所要時間", text: "⏱ " + durText(r) }) : null; })(),
                   bookChip(t, di, li),
                 ]),
                 el("div", { class: "leg2-route", text: (l.from || "") + " ⇒ " + (l.to || "") }),
@@ -2998,6 +3088,7 @@ button.mini{font-size:12px;padding:2px 8px}
     ]);
     const form = el("form", { class: "legform" }, [
       el("div", { class: "grid2" }, [f("dy_date", "日付", d.date, { type: "date", required: "required" }), f("dy_route", "この日のルート・予定", d.route, { placeholder: "例：マドリード ⇒ バレンシア" })]),
+      el("div", { class: "field" }, [el("label", { for: "dy_memo", text: "この日のメモ" }), el("textarea", { id: "dy_memo", rows: "3", placeholder: "その日に覚えておきたいこと" }, [d.memo || ""])]),
       legsBox,
       el("fieldset", {}, [el("legend", { text: "宿" }),
         el("div", { class: "grid2" }, [f("dy_stay", "宿の名前", d.stay, { placeholder: "空欄なら「未定」と表示" })]),
@@ -3031,7 +3122,7 @@ button.mini{font-size:12px;padding:2px 8px}
       const stayName = val("dy_stay"), cin = val("dy_in"), cout = val("dy_out");
       const nights = validDate(cin) && validDate(cout) ? dayDiff(cin, cout) : 0;
       if (stayName && (nights < 1 || nights > 60)) { msg.hidden = false; msg.textContent = "チェックアウトはチェックインより後の日付にしてください。"; return; }
-      const patch = { date: val("dy_date"), route: val("dy_route") };
+      const patch = { date: val("dy_date"), route: val("dy_route"), memo: val("dy_memo") };
       const total = num(val("dy_stayCost")), note = val("dy_stayNote");
       let mapName = val("dy_stayMap"), addr = val("dy_stayAddr");
       const renamed = !!stayName && stayName !== (d.stay || "");
@@ -3233,7 +3324,8 @@ button.mini{font-size:12px;padding:2px 8px}
         el("div", { class: "field", hidden: isFlight(l) ? null : "hidden" }, [el("label", { for: "lg_cabin", text: "座席クラス（飛行機）" }), (() => { const sel = el("select", { id: "lg_cabin", disabled: canWrite ? null : "disabled" }, ["", "エコノミー", "プレミアムエコノミー", "ビジネス", "ファースト"].map((c) => { const o = new Option(c || "未設定（エコノミーとして案内）", c); return o; })); sel.value = l.cabin || ""; return sel; })()])]),
       el("div", { class: "grid2" }, [
         el("div", { class: "field" }, [el("label", { for: "lg_date", text: "移動する日" }), (() => { const sel = el("select", { id: "lg_date", disabled: canWrite ? null : "disabled" }, (t.days || []).filter((x) => x && validDate(x.date)).map((x) => new Option(jpDate(x.date) + (x.route ? "　" + x.route : ""), x.date))); sel.value = day.date; return sel; })()]),
-        f("lg_dep", "出発時刻", l.dep, { placeholder: "22:45" }), f("lg_arr", "到着時刻", l.arr, { placeholder: "5:50" })]),
+        f("lg_dep", "出発時刻", l.dep, { placeholder: "22:45" }), f("lg_arr", "到着時刻", l.arr, { placeholder: "5:50" }),
+        f("lg_dur", "所要時間（空欄なら自動で計算）", l.dur, { placeholder: (() => { const r = legDur(Object.assign({}, l, { dur: "" }), day.date); return r ? "自動：" + durText(r) + "（直すときは 2:15 の形で）" : "例：2:15"; })() })]),
       el("div", { class: "grid2" }, [f("lg_fromSpot", "出発する駅・空港（地図で検索する名前）", l.fromSpot), f("lg_toSpot", "到着する駅・空港", l.toSpot)]),
       el("div", { class: "grid2" }, [f("lg_ref", "予約番号", l.ref), f("lg_seat", "座席・号車", l.seat), f("lg_terminal", "ターミナル・ホーム", l.terminal)]),
       el("div", { class: "grid2" }, [f("lg_price", "料金（円）", num(l.price) || "", { type: "number", min: "0", step: "1", inputmode: "numeric" }), f("lg_km", "距離（km・概算）", num(l.km) || "", { type: "number", min: "0", step: "1", inputmode: "numeric" })]),
@@ -3253,7 +3345,7 @@ button.mini{font-size:12px;padding:2px 8px}
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const val = (id) => $("#" + id).value.trim();
-      const patch = { cabin: $("#lg_cabin").value, from: val("lg_from"), to: val("lg_to"), mode: val("lg_mode"), number: val("lg_number"), dep: val("lg_dep"), arr: val("lg_arr"), fromSpot: val("lg_fromSpot"), toSpot: val("lg_toSpot"), ref: val("lg_ref"), seat: val("lg_seat"), terminal: val("lg_terminal"), price: num(val("lg_price")), km: num(val("lg_km")), note: val("lg_note") };
+      const patch = { cabin: $("#lg_cabin").value, from: val("lg_from"), to: val("lg_to"), mode: val("lg_mode"), number: val("lg_number"), dep: val("lg_dep"), arr: val("lg_arr"), dur: val("lg_dur"), fromSpot: val("lg_fromSpot"), toSpot: val("lg_toSpot"), ref: val("lg_ref"), seat: val("lg_seat"), terminal: val("lg_terminal"), price: num(val("lg_price")), km: num(val("lg_km")), note: val("lg_note") };
       // a different city: drop what belonged to the old place (station, coordinates, directions, distance, booking)
       const fromCh = patch.from !== (l.from || ""), toCh = patch.to !== (l.to || "");
       if (fromCh) { patch.fromLL = null; patch.before = null; if (patch.fromSpot === (l.fromSpot || "")) patch.fromSpot = ""; }
@@ -3263,7 +3355,7 @@ button.mini{font-size:12px;padding:2px 8px}
         patch.link = "";
         if ($("#lg_clear").checked) {
           patch.booked = false;
-          for (const k of ["number", "ref", "seat", "terminal", "dep", "arr"]) if (patch[k] === (l[k] || "")) patch[k] = "";
+          for (const k of ["number", "ref", "seat", "terminal", "dep", "arr", "dur"]) if (patch[k] === (l[k] || "")) patch[k] = "";
           if (patch.price === num(l.price)) { patch.price = 0; patch.approx = false; }
         }
       }
