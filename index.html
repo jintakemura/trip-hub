@@ -722,15 +722,6 @@ button.mc-cell.past{opacity:.72}
 .lounge,.smoke,.acc-details{font-size:14px}
 .lounge summary,.smoke summary,.acc-details summary{padding:4px 0;line-height:1.6}
 .wait{font-size:14px;line-height:1.6}
-@media (max-width:640px){
-  .itin li{grid-template-columns:1fr !important;gap:6px}
-  .itin .d{display:flex;align-items:baseline;gap:8px;font-size:15px;font-weight:700}
-  .itin .d small{font-size:12px;font-weight:500}
-  .sheet{padding:18px 16px}
-  .mv-leg{grid-template-columns:1fr;gap:6px}
-  .mv-time{display:flex;align-items:baseline;gap:8px}
-  .p-facts{grid-template-columns:1fr 1fr}
-}
 
 /* planner */
 .sec-lead{margin:-6px 0 12px;font-size:14px;color:var(--muted);line-height:1.7}
@@ -923,6 +914,13 @@ select.sc-in{cursor:pointer;padding-right:2px}
 .mv-time .dep{font-size:22px;font-weight:500}
 .mv-time .arr{font-size:13px;color:var(--muted)}
 .mv-main{display:grid;gap:6px;min-width:0}
+.mv-leg{grid-template-columns:auto minmax(0,1fr)}
+.mv-time .arr{white-space:nowrap}
+@media (max-width:640px){
+  .mv-leg{grid-template-columns:minmax(0,1fr);gap:8px;padding:12px 14px}
+  .mv-time{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px}
+  .mv-time .arr{font-size:14px}
+}
 .mv-ft{font-weight:700;font-size:16px;overflow-wrap:anywhere}
 .mv-chips{display:flex;flex-wrap:wrap;gap:4px 6px}
 .mv-chips span{font-size:12px;padding:1px 8px;border-radius:6px;background:var(--accent-soft);color:var(--ink)}
@@ -1059,6 +1057,14 @@ button.mini{font-size:12px;padding:2px 8px}
 .ticket-file button{margin-left:auto;flex:none}
 @media (prefers-reduced-motion:no-preference){.pass,.ticket,.wish{transition:border-color .15s}.pass:hover,.ticket:hover,.wish:hover{border-color:var(--accent)}}
 @media (max-width:480px){.ticket{grid-template-columns:84px 1fr}.stamp{width:60px;height:60px}.ticket .side .mon{font-size:18px}.bar-row{grid-template-columns:1fr}.bar-meta{grid-column:1}}
+/* phone overrides: kept last so they win */
+@media (max-width:640px){
+  .itin li{grid-template-columns:1fr !important;gap:6px}
+  .itin .d{display:flex;align-items:baseline;gap:8px;font-size:15px;font-weight:700}
+  .itin .d small{font-size:12px;font-weight:500}
+  .sheet{padding:18px 16px}
+  .p-facts{grid-template-columns:1fr 1fr}
+}
 </style>
 
 <div class="wrap">
