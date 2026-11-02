@@ -547,13 +547,12 @@ select{font:inherit;font-size:14px;padding:5px 8px;border-radius:8px;border:1px 
 
 /* depart / return rows */
 .drs{display:grid;gap:4px;margin-top:6px}
-.dr{display:grid;grid-template-columns:auto auto 1fr;align-items:baseline;column-gap:8px;font-size:14px;min-width:0}
+.dr{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 8px;font-size:14px;min-width:0}
 .dr-l{grid-row:span 1;font-size:11px;font-weight:700;letter-spacing:.06em;color:#fff;background:var(--tc,var(--accent));border-radius:4px;padding:1px 6px;align-self:center}
 .dr:nth-child(2) .dr-l{background:color-mix(in srgb,var(--tc,var(--accent)) 55%,var(--muted))}
 .dr-d{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 .dr-t{font-family:var(--mono);font-size:13px;color:var(--ink);white-space:nowrap}
-.dr-p{grid-column:2 / -1;font-size:12px;color:var(--muted);margin-top:-2px}
-.dr-t + .dr-p{grid-column:2 / -1}
+.dr-p{flex-basis:100%;padding-left:calc(2.4em + 8px);font-size:12px;color:var(--muted);margin-top:-2px;overflow-wrap:anywhere}
 .pf .drs{margin-top:4px}
 .pf .dr{font-size:13px}
 .dr-l{white-space:nowrap;line-height:1.5}
@@ -1057,8 +1056,24 @@ button.mini{font-size:12px;padding:2px 8px}
 .ticket-file button{margin-left:auto;flex:none}
 @media (prefers-reduced-motion:no-preference){.pass,.ticket,.wish{transition:border-color .15s}.pass:hover,.ticket:hover,.wish:hover{border-color:var(--accent)}}
 @media (max-width:480px){.ticket{grid-template-columns:84px 1fr}.stamp{width:60px;height:60px}.ticket .side .mon{font-size:18px}.bar-row{grid-template-columns:1fr}.bar-meta{grid-column:1}}
+
+.sheet{box-sizing:border-box}
+/* inputs never push out of their column */
+input,select,textarea{max-width:100%;min-width:0;box-sizing:border-box}
+input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:none;min-height:44px}
+.grid2 > *{min-width:0}
 /* phone overrides: kept last so they win */
 @media (max-width:640px){
+  .cal{min-width:0;gap:2px}
+  .cal-row{grid-template-columns:30px repeat(31,minmax(0,1fr));gap:2px}
+  .cal-wrap{overflow:visible}
+  .mc-today{display:none}
+  .mc-cell.is-today{outline-width:3px}
+  .mc-stay span + span{display:none}
+  .mc-num{font-size:12px}
+  .p-facts .pf{min-width:0}
+  .pf b{overflow-wrap:anywhere}
+  .ticket .body b,.ticket .body span{overflow-wrap:anywhere}
   .itin li{grid-template-columns:1fr !important;gap:6px}
   .itin .d{display:flex;align-items:baseline;gap:8px;font-size:15px;font-weight:700}
   .itin .d small{font-size:12px;font-weight:500}
@@ -2210,7 +2225,7 @@ button.mini{font-size:12px;padding:2px 8px}
         else if (d.route) kids.push(el("div", { class: "mc-route", text: d.route }));
         if (d.stay && d.stay !== "機内泊") kids.push(el("div", { class: "mc-stay" + (d.stayBooked ? " ok" : "") }, [el("span", { "aria-hidden": "true", text: "🛏" }), el("span", { text: d.stay })]));
         else if (!d.stay && ds < t.end) kids.push(el("div", { class: "mc-stay todo", text: "宿 未定" }));
-        else if (d.stay === "機内泊") kids.push(el("div", { class: "mc-stay", text: "機内泊" }));
+        else if (d.stay === "機内泊") kids.push(el("div", { class: "mc-stay" }, [el("span", { "aria-hidden": "true", text: "💺" }), el("span", { text: "機内泊" })]));
         const cell = el("button", { type: "button", class: "mc-cell on" + (ds < todayStr ? " past" : "") + (ds === todayStr ? " is-today" : "") + (startHere ? " s" : "") + (!(entries.get(nextD) && entries.get(nextD).t === t) ? " e" : ""), style: "--tc:" + tripColor(t), "aria-label": m + "月" + day + "日 " + (t.title || t.place) + " の旅程を開く", onclick: () => { openItin(t); requestAnimationFrame(() => { const target = e.di >= 0 ? document.getElementById("day-" + e.di) : null; if (target) target.scrollIntoView({ block: "start" }); }); } }, kids);
         cells.push(cell);
       } else cells.push(el("div", { class: "mc-cell" + (ds === todayStr ? " is-today" : "") }, kids));
