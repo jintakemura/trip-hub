@@ -617,6 +617,10 @@ span.bk{cursor:default}
 .full-btn{margin-left:auto}
 .overlay.full .full-btn{display:none}
 .full-float{position:fixed;top:max(14px,env(safe-area-inset-top,0px));right:max(14px,env(safe-area-inset-right,0px));z-index:30;display:flex;gap:8px;width:auto!important;margin:0!important;max-width:none!important}
+.full-float .ff-edit,.edit-float .ff-edit{background:var(--coral);color:#fff;border-color:var(--coral)}
+.full-float .ff-edit.on,.edit-float .ff-edit.on{background:#1a7f5a;border-color:#1a7f5a}
+.edit-float{position:sticky;bottom:12px;z-index:5;display:flex;justify-content:flex-end;pointer-events:none;margin-top:8px}
+.edit-float button{pointer-events:auto;display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:14px;padding:10px 16px;border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,.2)}
 .full-float button{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:14px;padding:9px 14px;border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,.18)}
 .ff-shrink{background:var(--accent);border-color:var(--accent);color:var(--surface)}
 .ff-close{background:var(--surface);color:var(--ink)}
@@ -2907,7 +2911,7 @@ button.mini{font-size:12px;padding:2px 8px}
       ]); })(),
       canWrite ? el("div", { class: "itin-edit-bar" + (itinEdit ? " on" : "") }, [
         el("span", { text: itinEdit ? "編集中：日ごとに「この日を編集」「＋ 移動を追加」、区間は「行き方・詳細」から変更できます" : "旅程の日付・ルート・宿・移動を直せます" }),
-        el("button", { type: "button", class: itinEdit ? "" : "primary", text: itinEdit ? "編集を終える" : "旅程を編集", onclick: () => { itinEdit = !itinEdit; openItin(t); } }),
+        el("button", { type: "button", class: itinEdit ? "" : "primary", text: itinEdit ? "編集を終える" : "旅程を編集", onclick: () => toggleItinEdit(t) }),
       ]) : null,
       window.__shareBtn ? window.__shareBtn(t) : null,
       el("ol", { class: "itin" + (itinFull ? " wide" : ""), style: "margin-top:12px" }, days.map(([d, di]) => {
@@ -2981,9 +2985,11 @@ button.mini{font-size:12px;padding:2px 8px}
       })),
       itinEdit && canWrite ? el("button", { type: "button", class: "add-day", text: "＋ 日を追加", onclick: () => openDay(t, null) }) : null,
       itinFull ? el("div", { class: "full-float", role: "group", "aria-label": "全画面の操作" }, [
+        canWrite ? el("button", { type: "button", class: "ff-edit" + (itinEdit ? " on" : ""), onclick: () => toggleItinEdit(t) }, [el("span", { class: "ff-ico", "aria-hidden": "true", text: itinEdit ? "✓" : "✎" }), itinEdit ? "編集を終える" : "旅程を編集"]) : null,
         el("button", { type: "button", class: "ff-shrink", onclick: () => { itinFull = false; try { localStorage.setItem("tabicho-itin-full", "0"); } catch (e) {} openItin(t); } }, [el("span", { class: "ff-ico", "aria-hidden": "true", text: "⤡" }), "元の大きさに戻す"]),
         el("button", { type: "button", class: "ff-close", "aria-label": "旅程を閉じる", onclick: () => { itinEdit = false; closeSheet(); } }, [el("span", { "aria-hidden": "true", text: "✕" }), "閉じる"]),
       ]) : null,
+      !itinFull && canWrite ? el("div", { class: "edit-float" }, [el("button", { type: "button", class: "ff-edit" + (itinEdit ? " on" : ""), onclick: () => toggleItinEdit(t) }, [el("span", { class: "ff-ico", "aria-hidden": "true", text: itinEdit ? "✓" : "✎" }), itinEdit ? "編集を終える" : "旅程を編集"])]) : null,
       el("div", { class: "sheet-actions" }, [el("div", { style: "margin-left:auto" }, [el("button", { type: "button", class: "primary", text: "閉じる", onclick: () => { itinEdit = false; closeSheet(); } })])])
     );
     overlay.classList.toggle("full", itinFull);
@@ -3003,6 +3009,15 @@ button.mini{font-size:12px;padding:2px 8px}
     }
   }
   let itinReturn = null;
+  // switch edit mode without losing your place: keep the day at the top of the screen where it was
+  function toggleItinEdit(t) {
+    const sh = $(".sheet"), top = sh.getBoundingClientRect().top;
+    const lis = [...document.querySelectorAll("#itinView li[data-date]")];
+    const anchor = lis.find((li) => li.getBoundingClientRect().bottom > top + 60) || null;
+    const off = anchor ? anchor.getBoundingClientRect().top - top : 0;
+    itinEdit = !itinEdit; openItin(t);
+    if (anchor) { const li = document.querySelector('#itinView li[data-date="' + anchor.dataset.date + '"]'); if (li) sh.scrollTop += li.getBoundingClientRect().top - top - off; }
+  }
 
   async function saveDays(tripId, mutate) {
     const cur = trips.find((x) => x._id === tripId);
