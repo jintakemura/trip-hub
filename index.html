@@ -691,7 +691,7 @@ button.mc-cell.past{opacity:.72}
 .day-memo.editing{display:block}
 .dm-input{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);resize:vertical}
 .dm-acts{display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap}
-.dm-add{margin:4px 0 8px;opacity:.85}
+.dm-add{margin:2px 0 8px;font-size:12px;color:var(--muted);background:transparent;border:1px dashed var(--line)}
 .legbox{gap:8px;margin-top:10px}
 @keyframes justEdited{0%{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent,#e8a33d) 70%,transparent);background:color-mix(in srgb,var(--accent,#e8a33d) 14%,transparent)}100%{box-shadow:0 0 0 3px transparent;background:transparent}}
 .just-edited{animation:justEdited 2.2s ease-out;border-radius:12px}
@@ -2855,7 +2855,7 @@ button.mini{font-size:12px;padding:2px 8px}
     const box = el("div", { class: "day-memo-wrap" });
     const show = () => {
       const has = !!String(d.memo || "").trim();
-      if (!has && !(canWrite && itinEdit)) { box.replaceChildren(); return; }
+      if (!has && !canWrite) { box.replaceChildren(); return; }
       box.replaceChildren(has
         ? el("div", { class: "day-memo" }, [el("span", { class: "dm-k", text: "メモ" }), el("div", { class: "dm-t", text: d.memo }), canWrite ? el("button", { type: "button", class: "mini", text: "✎ 直す", onclick: edit }) : null])
         : el("button", { type: "button", class: "mini dm-add", text: "＋ この日のメモ", onclick: edit }));
