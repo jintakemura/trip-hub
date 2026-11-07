@@ -1058,6 +1058,73 @@ button.mini{font-size:12px;padding:2px 8px}
 @media (max-width:480px){.ticket{grid-template-columns:84px 1fr}.stamp{width:60px;height:60px}.ticket .side .mon{font-size:18px}.bar-row{grid-template-columns:1fr}.bar-meta{grid-column:1}}
 
 .sheet{box-sizing:border-box}
+
+/* itinerary table editor */
+.ieb-acts{display:flex;flex-wrap:wrap;gap:8px}
+.edit-float{gap:8px}
+.edit-float .ff-grid{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.full-float .ff-grid{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.gx-bar{position:sticky;top:-1px;z-index:6;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);box-shadow:0 6px 16px rgba(0,0,0,.08)}
+.gx-acts{display:flex;flex-wrap:wrap;gap:8px}
+.gx-count{font-size:13px;color:var(--muted)}
+.gx-count.dirty{color:var(--coral);font-weight:700}
+.gx-help{display:grid;gap:8px;font-size:13px;line-height:1.6;color:var(--muted)}
+.gx-opt{display:flex;gap:8px;align-items:center;color:var(--ink);font-size:14px}
+.gx-msg{font-size:13px;color:#1a7f5a;min-height:1em}
+.gx-msg:empty{display:none}
+.gx-bulk{position:fixed;left:max(12px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));z-index:40;box-shadow:0 8px 24px rgba(0,0,0,.18);max-width:900px;margin:0 auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--sky) 14%,var(--surface));border:1px solid color-mix(in srgb,var(--sky) 40%,var(--line));font-size:14px}
+.gx-bulk[hidden]{display:none}
+.gx-bulk button.danger{color:#b42318;border-color:#f0b7b0}
+.gx-grid{display:grid;margin-bottom:80px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.gr{display:grid;grid-template-columns:156px minmax(0,1fr);border-top:1px solid var(--line);background:var(--surface);position:relative}
+.gr:first-child{border-top:0}
+.gr:nth-child(even){background:color-mix(in srgb,var(--bg) 55%,var(--surface))}
+.gr.picked,.gl.picked{background:color-mix(in srgb,var(--sky) 12%,var(--surface))}
+.gr.drop-before{box-shadow:inset 0 3px 0 var(--coral)}
+.gr.drop-after{box-shadow:inset 0 -3px 0 var(--coral)}
+.gr.drop-into{box-shadow:inset 0 0 0 3px var(--coral)}
+.gr-date{display:flex;align-items:flex-start;gap:6px;padding:10px 8px;border-right:1px solid var(--line)}
+.gr-date b{display:block;font-size:14px;white-space:nowrap}
+.gr-date small{font-size:11px;color:var(--muted)}
+.gx-pick{width:18px;height:18px;margin:3px 0 0;flex:none;accent-color:var(--sky)}
+.gx-handle{flex:none;width:28px;height:32px;padding:0;border-radius:6px;border:1px dashed var(--line);background:var(--bg);color:var(--muted);font-size:16px;line-height:1;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.gx-handle:active{cursor:grabbing}
+.gr-main{display:grid;gap:8px;padding:8px 10px;min-width:0}
+.gr-top{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1.2fr) 90px minmax(0,1.4fr);gap:8px}
+.gr-f,.gl-f{display:grid;gap:2px;min-width:0;font-size:11px;color:var(--muted)}
+.gx{display:grid;min-width:0}
+.gx-in{width:100%;box-sizing:border-box;font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 8px;min-height:34px;resize:vertical}
+textarea.gx-in{min-height:34px;line-height:1.45}
+.gx-in:focus{outline:2px solid var(--sky);outline-offset:-1px}
+.gx.changed .gx-in{background:color-mix(in srgb,#f5c542 22%,var(--surface));border-color:#e0a82e}
+.gx-old{font-size:11px;color:#9a6b00;overflow-wrap:anywhere;line-height:1.4}
+.gx-old:empty{display:none}
+.gr-legs{display:grid;gap:4px}
+.gl{display:grid;grid-template-columns:22px 28px minmax(0,1.2fr) minmax(0,1.2fr) minmax(0,1fr) 64px 64px 84px 28px;gap:6px;align-items:start;border-radius:8px;padding:2px}
+.gl-head span{font-size:11px;color:var(--muted)}
+.gl .gl-lab{display:none}
+.gx-del{width:28px;height:32px;padding:0;border-radius:6px;border:1px solid #f0b7b0;background:var(--surface);color:#b42318}
+.gx-add{justify-self:start}
+.gx-ghost{position:fixed;z-index:10000;pointer-events:none;padding:8px 12px;border-radius:10px;background:var(--ink);color:var(--surface);font-size:13px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:70vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:900px){
+  .gr{grid-template-columns:minmax(0,1fr)}
+  .gr-date{border-right:0;border-bottom:1px dashed var(--line);align-items:center}
+  .gr-date > div{display:flex;gap:8px;align-items:baseline}
+  .gr-top{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .gr-f.memo,.gr-f.route{grid-column:1/-1}
+  .gl{grid-template-columns:22px 28px repeat(6,minmax(0,1fr)) 28px;grid-template-areas:"p h f f f t t t x" "p h m m m m m m x" "p h d d a a c c x";padding:6px;border:1px solid var(--line);background:var(--surface)}
+  .gl > .gx-pick{grid-area:p}
+  .gl > .gx-handle{grid-area:h}
+  .gl .k-from{grid-area:f}
+  .gl .k-to{grid-area:t}
+  .gl .k-mode{grid-area:m}
+  .gl .k-dep{grid-area:d}
+  .gl .k-arr{grid-area:a}
+  .gl .k-price{grid-area:c}
+  .gl > .gx-del{grid-area:x}
+  .gl-head{display:none}
+  .gl .gl-lab{display:block}
+}
 /* inputs never push out of their column */
 input,select,textarea{max-width:100%;min-width:0;box-sizing:border-box}
 input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:none;min-height:44px}
@@ -2787,9 +2854,11 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
   const overlay = $("#overlay");
   let editing = null, fromWish = null, delArmed = false;
   function closeSheet() {
+    gridState = null;
     if (planEdit) { const pe = planEdit; clearTimeout(planSaveTimer); planEdit = null; overlay.classList.remove("full"); db && db.doc("plans/" + pe.id).set(JSON.parse(JSON.stringify(Object.assign(pe.data, { updatedAt: new Date().toISOString() })))).catch(() => {}); } overlay.hidden = true; editing = null; fromWish = null; }
-  overlay.addEventListener("click", (e) => { if (e.target === overlay) closeSheet(); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !overlay.hidden) closeSheet(); });
+  const gridBusy = () => gridState && gridState.dirty;
+  overlay.addEventListener("click", (e) => { if (e.target === overlay && !gridBusy()) closeSheet(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !overlay.hidden && !gridBusy()) closeSheet(); });
   for (const b of document.querySelectorAll(".cancel")) b.addEventListener("click", closeSheet);
 
   function updateTotal() { const s = COSTS.reduce((a, k) => a + num($("#t_" + k).value), 0); $("#t_total").textContent = "合計 " + yen(s); }
@@ -2899,6 +2968,256 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
     requestAnimationFrame(grow);
     return el("label", { class: "day-memo field-memo" }, [el("span", { class: "dm-k", text: "メモ" }), ta, st]);
   }
+  // ---------- itinerary as a table: drag days and moves, edit cells, compare with the saved version ----------
+  let gridState = null;
+  const SCHED_KEYS = ["route", "memo", "legs"];
+  const STAY_KEYS = ["stay", "stayCost", "stayNote", "stayAddr", "stayMap", "stayAddrAI", "stayBooked"];
+  const LEG_COLS = [["from", "出発地", "例：マドリード"], ["to", "到着地", "例：バレンシア"], ["mode", "手段・会社", "例：高速鉄道"], ["dep", "出発", "10:30"], ["arr", "到着", "12:34"], ["price", "料金", "円"]];
+  const legSig = (l) => l ? [l.from, l.to, l.mode, l.dep, l.arr, num(l.price)].map((x) => String(x == null ? "" : x)).join("|") : "";
+  function openItinGrid(t0, startDate) {
+    const t = trips.find((x) => x._id === t0._id) || t0;
+    const orig = JSON.parse(JSON.stringify((t.days || []).filter((d) => d && validDate(d.date)).sort((a, b) => a.date.localeCompare(b.date))));
+    const byDate = new Map(orig.map((d) => [d.date, d]));
+    gridState = { t, orig, draft: JSON.parse(JSON.stringify(orig)), withStay: true, msg: "", sel: new Set() };
+    try { gridState.withStay = localStorage.getItem("tabicho-grid-stay") !== "0"; } catch (e) {}
+    overlay.classList.add("full");
+    $("#sheetTitle").textContent = (t.title || t.place || "旅") + "の旅程を表で編集";
+    $("#tripForm").hidden = true; $("#wishForm").hidden = true;
+    const v = $("#itinView"); v.hidden = false;
+    const G = gridState;
+
+    // ---- what changed compared with the saved itinerary ----
+    const oldOf = (date) => byDate.get(date) || {};
+    const changes = () => {
+      let n = 0;
+      const dates = new Set([...G.orig.map((d) => d.date), ...G.draft.map((d) => d.date)]);
+      for (const ds of dates) {
+        const a = oldOf(ds), b = G.draft.find((d) => d.date === ds) || {};
+        for (const k of ["route", "memo", "stay"]) if (String(a[k] || "") !== String(b[k] || "")) n++;
+        if (num(a.stayCost) !== num(b.stayCost)) n++;
+        const la = a.legs || [], lb = b.legs || [];
+        for (let i = 0; i < Math.max(la.length, lb.length); i++) if (legSig(la[i]) !== legSig(lb[i])) n++;
+      }
+      return n;
+    };
+    const cellOld = (date, key, legIdx) => {
+      const a = oldOf(date);
+      if (legIdx == null) return key === "stayCost" ? (num(a.stayCost) ? yen(a.stayCost) : "") : String(a[key] || "");
+      const l = (a.legs || [])[legIdx]; if (!l) return "（なし）";
+      return key === "price" ? (num(l.price) ? yen(l.price) : "") : String(l[key] || "");
+    };
+    const isChanged = (date, key, legIdx) => {
+      const b = G.draft.find((d) => d.date === date) || {};
+      if (legIdx == null) return key === "stayCost" ? num(oldOf(date).stayCost) !== num(b.stayCost) : String(oldOf(date)[key] || "") !== String(b[key] || "");
+      const lo = (oldOf(date).legs || [])[legIdx], ln = (b.legs || [])[legIdx];
+      if (!lo || !ln) return true;
+      return key === "price" ? num(lo.price) !== num(ln.price) : String(lo[key] || "") !== String(ln[key] || "");
+    };
+
+    // ---- one editable cell ----
+    const cell = (date, key, legIdx, val, attrs, onval) => {
+      const wrap = el("div", { class: "gx", "data-k": key });
+      const inp = el(attrs && attrs.multi ? "textarea" : "input", Object.assign({ class: "gx-in", value: attrs && attrs.multi ? null : (val == null ? "" : String(val)), rows: attrs && attrs.multi ? "2" : null, "aria-label": attrs && attrs.label, placeholder: attrs && attrs.ph, inputmode: attrs && attrs.numeric ? "numeric" : null }), attrs && attrs.multi ? [val || ""] : []);
+      const old = el("div", { class: "gx-old" });
+      const mark = () => {
+        const ch = isChanged(date, key, legIdx);
+        wrap.classList.toggle("changed", ch);
+        const o = cellOld(date, key, legIdx);
+        old.textContent = ch ? "元：" + (o || "（空欄）") : "";
+      };
+      inp.addEventListener("input", () => { onval(inp.value); mark(); count(); });
+      inp.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" || (attrs && attrs.multi && !e.metaKey && !e.ctrlKey)) return;
+        e.preventDefault();
+        const all = [...v.querySelectorAll(".gx-in")]; const i = all.indexOf(inp);
+        const next = all.slice(i + 1).find((x) => x.closest(".gx") && x.closest(".gx").dataset.k === key) || all[i + 1];
+        if (next) next.focus();
+      });
+      wrap.append(inp, old); mark();
+      return wrap;
+    };
+
+    // ---- moving things ----
+    const moveDay = (from, to) => {
+      if (from === to || from + 1 === to) return;
+      const dates = G.draft.map((d) => d.date);
+      const keys = G.withStay ? [...SCHED_KEYS, ...STAY_KEYS] : SCHED_KEYS;
+      const packs = G.draft.map((d) => { const p = {}; for (const k of keys) p[k] = d[k]; return p; });
+      const [it] = packs.splice(from, 1);
+      packs.splice(to > from ? to - 1 : to, 0, it);
+      G.draft.forEach((d, i) => { for (const k of keys) { if (packs[i][k] === undefined) delete d[k]; else d[k] = packs[i][k]; } d.date = dates[i]; });
+      G.msg = jpDate(dates[from]) + " の予定を " + jpDate(dates[to > from ? to - 1 : to]) + " に移しました" + (G.withStay ? "（宿も一緒に）" : "（宿は日付のまま）");
+    };
+    const moveLeg = (di, li, toDi) => {
+      if (di === toDi) return;
+      const [l] = G.draft[di].legs.splice(li, 1);
+      const dst = G.draft[toDi]; dst.legs = Array.isArray(dst.legs) ? dst.legs : [];
+      if (toDi > di) dst.legs.unshift(l); else dst.legs.push(l);
+      G.msg = "「" + (l.from || "") + " ⇒ " + (l.to || "") + "」を " + jpDate(dst.date) + " に移しました";
+    };
+
+    // ---- drag with mouse or finger (pointer events, works on iPhone) ----
+    let drag = null;
+    const startDrag = (e, kind, di, li, label) => {
+      e.preventDefault();
+      const ghost = el("div", { class: "gx-ghost", text: label });
+      document.body.append(ghost);
+      drag = { kind, di, li, ghost, target: null, after: false, pid: e.pointerId };
+      e.currentTarget.setPointerCapture && e.currentTarget.setPointerCapture(e.pointerId);
+      moveGhost(e);
+    };
+    const clearMarks = () => v.querySelectorAll(".drop-before,.drop-after,.drop-into").forEach((x) => x.classList.remove("drop-before", "drop-after", "drop-into"));
+    const moveGhost = (e) => {
+      if (!drag) return;
+      drag.ghost.style.left = e.clientX + 12 + "px"; drag.ghost.style.top = e.clientY + 8 + "px";
+      const hit = document.elementFromPoint(e.clientX, e.clientY);
+      const row = hit && hit.closest && hit.closest(".gr[data-di]");
+      clearMarks(); drag.target = null;
+      if (row) {
+        const r = row.getBoundingClientRect(), ti = Number(row.dataset.di);
+        if (drag.kind === "day") { drag.after = e.clientY > r.top + r.height / 2; row.classList.add(drag.after ? "drop-after" : "drop-before"); drag.target = drag.after ? ti + 1 : ti; }
+        else { row.classList.add("drop-into"); drag.target = ti; }
+      }
+      // scroll the sheet when the finger is near the top or bottom
+      const sh = $(".sheet"), sr = sh.getBoundingClientRect();
+      if (e.clientY < sr.top + 60) sh.scrollTop -= 14; else if (e.clientY > sr.bottom - 60) sh.scrollTop += 14;
+    };
+    const endDrag = () => {
+      if (!drag) return;
+      const d = drag; drag = null; d.ghost.remove(); clearMarks();
+      if (d.target == null) return;
+      G.sel.clear();
+      if (d.kind === "day") moveDay(d.di, d.target); else moveLeg(d.di, d.li, d.target);
+      draw();
+    };
+    const handle = (kind, di, li, label) => {
+      const hnd = el("button", { type: "button", class: "gx-handle", "aria-label": (kind === "day" ? "この日の予定" : "この移動") + "をつかんで動かす", title: "つかんで上下に動かす" }, ["⠿"]);
+      hnd.addEventListener("pointerdown", (e) => startDrag(e, kind, di, li, label));
+      hnd.addEventListener("pointermove", moveGhost);
+      hnd.addEventListener("pointerup", endDrag);
+      hnd.addEventListener("pointercancel", () => { if (drag) { drag.ghost.remove(); drag = null; clearMarks(); } });
+      return hnd;
+    };
+
+    // ---- pick several days / moves with checkboxes, then act on all of them ----
+    const pick = (key, label) => {
+      const c = el("input", { type: "checkbox", class: "gx-pick", "aria-label": label + "を選ぶ" });
+      c.checked = G.sel.has(key);
+      c.addEventListener("change", () => { if (c.checked) G.sel.add(key); else G.sel.delete(key); c.closest(".gr, .gl").classList.toggle("picked", c.checked); bulkBar(); });
+      return c;
+    };
+    const selDays = () => [...G.sel].filter((k) => k.startsWith("d:")).map((k) => Number(k.slice(2))).sort((a, b) => a - b);
+    const selLegs = () => [...G.sel].filter((k) => k.startsWith("l:")).map((k) => k.slice(2).split(":").map(Number));
+    const bulk = el("div", { class: "gx-bulk", hidden: "hidden" });
+    const bulkBar = () => {
+      const ds = selDays(), ls = selLegs();
+      bulk.hidden = !ds.length && !ls.length;
+      bulk.replaceChildren(
+        el("b", { text: [ds.length ? ds.length + "日" : "", ls.length ? "移動 " + ls.length + "件" : ""].filter(Boolean).join("・") + "を選択中" }),
+        ls.length ? el("button", { type: "button", class: "danger", text: "選んだ移動を消す", onclick: () => {
+          ls.sort((a, b) => b[0] - a[0] || b[1] - a[1]).forEach(([di, li]) => { const L = G.draft[di] && G.draft[di].legs; if (L) L.splice(li, 1); });
+          G.sel.clear(); G.msg = "移動を " + ls.length + " 件消しました（保存するまで元に戻せます）"; draw();
+        } }) : null,
+        ds.length ? el("button", { type: "button", text: "選んだ日の予定を空にする", onclick: () => {
+          ds.forEach((di) => { const d = G.draft[di]; d.route = ""; d.memo = ""; d.legs = []; if (G.withStay) for (const k of STAY_KEYS) delete d[k]; });
+          G.sel.clear(); G.msg = ds.length + "日分の予定を空にしました" + (G.withStay ? "（宿も）" : "（宿はそのまま）"); draw();
+        } }) : null,
+        ds.length ? el("button", { type: "button", class: "danger", text: "選んだ日を消して詰める", onclick: () => {
+          const dates = G.draft.map((d) => d.date);
+          const keep = G.draft.filter((_, i) => !ds.includes(i));
+          keep.forEach((d, i) => { d.date = dates[i]; });
+          G.draft = keep; G.sel.clear();
+          G.msg = ds.length + "日を消して、後ろの日を前に詰めました（旅は " + ds.length + "日短くなります）"; draw();
+        } }) : null,
+        el("button", { type: "button", text: "選択をやめる", onclick: () => { G.sel.clear(); draw(); } }),
+      );
+    };
+    const counter = el("span", { class: "gx-count" });
+    const count = () => { const n = changes(); counter.textContent = n ? "変更 " + n + " か所（まだ保存していません）" : "変更なし"; counter.classList.toggle("dirty", !!n); G.dirty = !!n; };
+
+    const save = async (btn) => {
+      btn.disabled = true; G.msg = "保存中…"; flash();
+      try {
+        await saveDays(t._id, (days, cur) => {
+          const legSum = (ds) => ds.reduce((a, d) => a + (d.legs || []).filter((l) => !isTour(l)).reduce((s, l) => s + num(l.price), 0), 0);
+          const staySum = (ds) => ds.reduce((a, d) => a + num(d.stayCost), 0);
+          const before = days.slice();
+          const next = JSON.parse(JSON.stringify(G.draft));
+          // a move whose places changed loses what belonged to the old places
+          for (const d of next) for (const l of (d.legs || [])) {
+            if (l.__dirtyPlace) { l.fromLL = null; l.toLL = null; l.before = null; l.after = null; delete l.__dirtyPlace; }
+          }
+          days.splice(0, days.length, ...next);
+          return { transport: Math.max(0, num(cur.transport) + legSum(next) - legSum(before)), lodging: Math.max(0, num(cur.lodging) + staySum(next) - staySum(before)) };
+        });
+        gridState = null; itinEdit = true; itinReturn = { id: t._id, date: visibleDate() }; openItin(t);
+      } catch (err) { btn.disabled = false; G.msg = "保存できませんでした。もう一度試してください。"; flash(); }
+    };
+    const visibleDate = () => { const top = $(".sheet").getBoundingClientRect().top; const r = [...v.querySelectorAll(".gr[data-di]")].find((x) => x.getBoundingClientRect().bottom > top + 80); return r ? G.draft[Number(r.dataset.di)].date : null; };
+    const msgBox = el("div", { class: "gx-msg", role: "status" });
+    const flash = () => { msgBox.textContent = G.msg || ""; };
+
+    const draw = () => {
+      const sc = $(".sheet").scrollTop;
+      const rows = G.draft.map((d, di) => {
+        const legs = Array.isArray(d.legs) ? d.legs : (d.legs = []);
+        const dayLabel = jpDate(d.date) + "　" + (d.route || "");
+        return el("div", { class: "gr" + (G.sel.has("d:" + di) ? " picked" : ""), "data-di": String(di) }, [
+          el("div", { class: "gr-date" }, [pick("d:" + di, jpDate(d.date)), handle("day", di, null, dayLabel), el("div", {}, [el("b", { text: jpDate(d.date) }), el("small", { text: (dayDiff(G.draft[0].date, d.date) + 1) + "日目" })])]),
+          el("div", { class: "gr-main" }, [
+            el("div", { class: "gr-top" }, [
+              el("label", { class: "gr-f route" }, [el("span", { text: "ルート・予定" }), cell(d.date, "route", null, d.route, { label: jpDate(d.date) + "のルート", ph: "例：マドリード ⇒ バレンシア" }, (x) => { d.route = x; })]),
+              el("label", { class: "gr-f stay" }, [el("span", { text: "宿" }), cell(d.date, "stay", null, d.stay, { label: jpDate(d.date) + "の宿", ph: "宿の名前" }, (x) => { d.stay = x; })]),
+              el("label", { class: "gr-f cost" }, [el("span", { text: "宿代" }), cell(d.date, "stayCost", null, num(d.stayCost) || "", { label: "宿代", ph: "円", numeric: true }, (x) => { d.stayCost = num(x); })]),
+              el("label", { class: "gr-f memo" }, [el("span", { text: "メモ" }), cell(d.date, "memo", null, d.memo, { label: jpDate(d.date) + "のメモ", ph: "この日のメモ", multi: true }, (x) => { d.memo = x; })]),
+            ]),
+            el("div", { class: "gr-legs" }, [
+              legs.length ? el("div", { class: "gl gl-head", "aria-hidden": "true" }, [el("span"), el("span"), ...LEG_COLS.map(([, lab]) => el("span", { text: lab })), el("span")]) : null,
+              ...legs.map((l, li) => el("div", { class: "gl" + (G.sel.has("l:" + di + ":" + li) ? " picked" : "") }, [
+                pick("l:" + di + ":" + li, (l.from || "") + "から" + (l.to || "") + "への移動"),
+                handle("leg", di, li, (l.from || "？") + " ⇒ " + (l.to || "？")),
+                ...LEG_COLS.map(([k, lab, ph]) => el("label", { class: "gl-f k-" + k }, [el("span", { class: "gl-lab", text: lab }), cell(d.date, k, li, k === "price" ? (num(l.price) || "") : l[k], { label: lab, ph, numeric: k === "price" }, (x) => { if (k === "price") l.price = num(x); else { l[k] = x; if (k === "from" || k === "to") { l.__dirtyPlace = true; if (k === "from") l.fromSpot = ""; else l.toSpot = ""; } } })])),
+                el("button", { type: "button", class: "gx-del", "aria-label": "この移動を消す", text: "✕", onclick: () => { legs.splice(li, 1); G.msg = "移動を1つ消しました（保存するまで元に戻せます）"; draw(); } }),
+              ])),
+              el("button", { type: "button", class: "mini gx-add", text: "＋ 移動", onclick: () => { const prev = legs[legs.length - 1]; legs.push({ from: prev ? prev.to : "", to: "", mode: "", dep: "", arr: "" }); draw(); const ins = v.querySelectorAll('.gr[data-di="' + di + '"] .gl .gx-in'); if (ins.length) ins[ins.length - LEG_COLS.length + 1].focus(); } }),
+            ]),
+          ]),
+        ]);
+      });
+      const stayToggle = el("label", { class: "gx-opt" }, [
+        (() => { const c = el("input", { type: "checkbox" }); c.checked = G.withStay; c.addEventListener("change", () => { G.withStay = c.checked; try { localStorage.setItem("tabicho-grid-stay", c.checked ? "1" : "0"); } catch (e) {} }); return c; })(),
+        el("span", { text: "日を動かすとき、宿も一緒に動かす" }),
+      ]);
+      const saveBtn = el("button", { type: "button", class: "primary", text: "保存する", onclick: (e) => save(e.currentTarget) });
+      v.replaceChildren(
+        el("div", { class: "gx-bar" }, [
+          counter,
+          el("div", { class: "gx-acts" }, [
+            saveBtn,
+            el("button", { type: "button", text: "元に戻す", onclick: () => { G.sel.clear(); G.draft = JSON.parse(JSON.stringify(G.orig)); G.msg = "保存されている状態に戻しました"; draw(); } }),
+            el("button", { type: "button", text: "閉じる", onclick: (e) => {
+              if (G.dirty && !e.currentTarget.dataset.armed) { e.currentTarget.dataset.armed = "1"; e.currentTarget.textContent = "保存せずに閉じる"; G.msg = "まだ保存していない変更があります。もう一度押すと、変更を捨てて閉じます。"; flash(); return; }
+              gridState = null; itinReturn = { id: t._id, date: visibleDate() }; openItin(t);
+            } }),
+          ]),
+        ]),
+        el("div", { class: "gx-help" }, [
+          el("span", { text: "⠿ をつかんで上下に動かすと、その日の予定（ルート・移動・メモ）が移り、日付は自動で付け直されます。移動だけを別の日に動かすこともできます。黄色のマスは変更したところで、下に元の内容が出ます。「保存する」を押すまでは、元の旅程は変わりません。" }),
+          stayToggle,
+        ]),
+        msgBox,
+        bulk,
+        el("div", { class: "gx-grid" }, rows),
+        el("button", { type: "button", class: "add-day", text: "＋ 最後に日を追加", onclick: () => { const last = G.draft[G.draft.length - 1]; G.draft.push({ date: last ? addDays(last.date, 1) : (t.start || todayStr), route: "", legs: [] }); draw(); } }),
+      );
+      flash(); count(); bulkBar();
+      $(".sheet").scrollTop = sc;
+    };
+    draw();
+    overlay.hidden = false;
+    $(".sheet").scrollTop = 0;
+    if (startDate) { const i = G.draft.findIndex((d) => d.date >= startDate); const r = i >= 0 && v.querySelector('.gr[data-di="' + i + '"]'); if (r) { const sh = $(".sheet"); sh.scrollTop += r.getBoundingClientRect().top - sh.getBoundingClientRect().top - 12; } }
+  }
   function openItin(t) {
     t = trips.find((x) => x._id === t._id) || t;
     editing = null; fromWish = null;
@@ -2932,7 +3251,10 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
       ]); })(),
       canWrite ? el("div", { class: "itin-edit-bar" + (itinEdit ? " on" : "") }, [
         el("span", { text: itinEdit ? "編集中：日ごとに「この日を編集」「＋ 移動を追加」、区間は「行き方・詳細」から変更できます" : "旅程の日付・ルート・宿・移動を直せます" }),
-        el("button", { type: "button", class: itinEdit ? "" : "primary", text: itinEdit ? "編集を終える" : "旅程を編集", onclick: () => toggleItinEdit(t) }),
+        el("div", { class: "ieb-acts" }, [
+          el("button", { type: "button", class: itinEdit ? "" : "primary", text: itinEdit ? "編集を終える" : "旅程を編集", onclick: () => toggleItinEdit(t) }),
+          el("button", { type: "button", text: "▦ 表で編集・並べ替え", onclick: () => { const top = $(".sheet").getBoundingClientRect().top; const li = [...document.querySelectorAll("#itinView li[data-date]")].find((x) => x.getBoundingClientRect().bottom > top + 60); openItinGrid(t, li ? li.dataset.date : null); } }),
+        ]),
       ]) : null,
       window.__shareBtn ? window.__shareBtn(t) : null,
       el("ol", { class: "itin" + (itinFull ? " wide" : ""), style: "margin-top:12px" }, days.map(([d, di]) => {
@@ -3006,11 +3328,12 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
       })),
       itinEdit && canWrite ? el("button", { type: "button", class: "add-day", text: "＋ 日を追加", onclick: () => openDay(t, null) }) : null,
       itinFull ? el("div", { class: "full-float", role: "group", "aria-label": "全画面の操作" }, [
+        canWrite ? el("button", { type: "button", class: "ff-grid", onclick: () => { const top = $(".sheet").getBoundingClientRect().top; const li = [...document.querySelectorAll("#itinView li[data-date]")].find((x) => x.getBoundingClientRect().bottom > top + 60); openItinGrid(t, li ? li.dataset.date : null); } }, [el("span", { class: "ff-ico", "aria-hidden": "true", text: "▦" }), "表で編集"]) : null,
         canWrite ? el("button", { type: "button", class: "ff-edit" + (itinEdit ? " on" : ""), onclick: () => toggleItinEdit(t) }, [el("span", { class: "ff-ico", "aria-hidden": "true", text: itinEdit ? "✓" : "✎" }), itinEdit ? "編集を終える" : "旅程を編集"]) : null,
         el("button", { type: "button", class: "ff-shrink", onclick: () => { itinFull = false; try { localStorage.setItem("tabicho-itin-full", "0"); } catch (e) {} openItin(t); } }, [el("span", { class: "ff-ico", "aria-hidden": "true", text: "⤡" }), "元の大きさに戻す"]),
         el("button", { type: "button", class: "ff-close", "aria-label": "旅程を閉じる", onclick: () => { itinEdit = false; closeSheet(); } }, [el("span", { "aria-hidden": "true", text: "✕" }), "閉じる"]),
       ]) : null,
-      !itinFull && canWrite ? el("div", { class: "edit-float" }, [el("button", { type: "button", class: "ff-edit" + (itinEdit ? " on" : ""), onclick: () => toggleItinEdit(t) }, [el("span", { class: "ff-ico", "aria-hidden": "true", text: itinEdit ? "✓" : "✎" }), itinEdit ? "編集を終える" : "旅程を編集"])]) : null,
+      !itinFull && canWrite ? el("div", { class: "edit-float" }, [el("button", { type: "button", class: "ff-grid", onclick: () => { const top = $(".sheet").getBoundingClientRect().top; const li = [...document.querySelectorAll("#itinView li[data-date]")].find((x) => x.getBoundingClientRect().bottom > top + 60); openItinGrid(t, li ? li.dataset.date : null); } }, [el("span", { class: "ff-ico", "aria-hidden": "true", text: "▦" }), "表で編集"]), el("button", { type: "button", class: "ff-edit" + (itinEdit ? " on" : ""), onclick: () => toggleItinEdit(t) }, [el("span", { class: "ff-ico", "aria-hidden": "true", text: itinEdit ? "✓" : "✎" }), itinEdit ? "編集を終える" : "旅程を編集"])]) : null,
       el("div", { class: "sheet-actions" }, [el("div", { style: "margin-left:auto" }, [el("button", { type: "button", class: "primary", text: "閉じる", onclick: () => { itinEdit = false; closeSheet(); } })])])
     );
     overlay.classList.toggle("full", itinFull);
