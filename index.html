@@ -700,6 +700,15 @@ button.mc-cell.past{opacity:.72}
 @keyframes justEdited{0%{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent,#e8a33d) 70%,transparent);background:color-mix(in srgb,var(--accent,#e8a33d) 14%,transparent)}100%{box-shadow:0 0 0 3px transparent;background:transparent}}
 .just-edited{animation:justEdited 2.2s ease-out;border-radius:12px}
 .dur-chip{font-size:12px;font-weight:600;color:var(--ink);background:color-mix(in srgb,var(--sky,#4a90c2) 14%,transparent);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.near{margin-top:6px}
+.near summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--teal)}
+.near-body{display:grid;gap:8px;margin-top:8px}
+.near-row,.near-next{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.near-k{font-size:12px;color:var(--muted);margin-right:4px}
+.near-btn{font-size:13px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none;white-space:nowrap}
+.near-btn.main{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:700}
+.near-to{flex-basis:100%;font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.auto-chip{font-size:12px;font-weight:600;color:#9a6b00;background:color-mix(in srgb,#f5c542 22%,var(--surface));border:1px solid #e0a82e;border-radius:999px;padding:2px 8px}
 .leg-edit{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
 .itin.wide .legbox > .leg-edit{grid-column:1}
 .clear-old{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.5;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--accent,#e8a33d) 14%,transparent);margin:4px 0 8px}
@@ -2968,6 +2977,33 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
     requestAnimationFrame(grow);
     return el("label", { class: "day-memo field-memo" }, [el("span", { class: "dm-k", text: "メモ" }), ta, st]);
   }
+  // stations / airports already known in this trip, by place name and kind of transport
+  // (a city can have several stations: when this trip uses more than one, nothing is guessed)
+  function placeKind(l) { const k = modeKind(l); return k === "unknown" ? "" : k; }
+  function knownSpots(days) {
+    const m = new Map();
+    const put = (name, spot, ll, kind) => {
+      const n = String(name || "").trim(); if (!n || !kind || !spot) return;
+      const key = n + "|" + kind, cur = m.get(key) || { spots: new Map() };
+      if (!cur.spots.has(spot)) cur.spots.set(spot, Array.isArray(ll) ? ll : null);
+      else if (!cur.spots.get(spot) && Array.isArray(ll)) cur.spots.set(spot, ll);
+      m.set(key, cur);
+    };
+    for (const d of days || []) for (const l of (d && d.legs) || []) { const kd = placeKind(l); put(l.from, l.fromSpot, l.fromLL, kd); put(l.to, l.toSpot, l.toLL, kd); }
+    return m;
+  }
+  const knownFor = (known, name, l) => {
+    const kd = placeKind(l); if (!kd) return null;
+    const hit = known.get(String(name || "").trim() + "|" + kd);
+    if (!hit || hit.spots.size !== 1) return null; // none, or more than one station: don't guess
+    const [[spot, ll]] = [...hit.spots];
+    return { spot, ll };
+  };
+  function refillPlaces(l, known, side) {
+    const k = knownFor(known, side === "from" ? l.from : l.to, l); if (!k) return;
+    if (side === "from") { if (!l.fromSpot && k.spot) { l.fromSpot = k.spot; l.fromSpotAuto = true; } if (!Array.isArray(l.fromLL) && k.ll) l.fromLL = k.ll; }
+    else { if (!l.toSpot && k.spot) { l.toSpot = k.spot; l.toSpotAuto = true; } if (!Array.isArray(l.toLL) && k.ll) l.toLL = k.ll; }
+  }
   // ---------- itinerary as a table: drag days and moves, edit cells, compare with the saved version ----------
   let gridState = null;
   const SCHED_KEYS = ["route", "memo", "legs"];
@@ -2985,6 +3021,9 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
     $("#tripForm").hidden = true; $("#wishForm").hidden = true;
     const v = $("#itinView"); v.hidden = false;
     const G = gridState;
+    const origPlace = new WeakMap();
+    const remember = () => { for (const d of G.draft) for (const l of d.legs || []) origPlace.set(l, { from: l.from || "", to: l.to || "" }); };
+    remember();
 
     // ---- what changed compared with the saved itinerary ----
     const oldOf = (date) => byDate.get(date) || {};
@@ -3142,11 +3181,15 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
           const legSum = (ds) => ds.reduce((a, d) => a + (d.legs || []).filter((l) => !isTour(l)).reduce((s, l) => s + num(l.price), 0), 0);
           const staySum = (ds) => ds.reduce((a, d) => a + num(d.stayCost), 0);
           const before = days.slice();
-          const next = JSON.parse(JSON.stringify(G.draft));
-          // a move whose places changed loses what belonged to the old places
-          for (const d of next) for (const l of (d.legs || [])) {
-            if (l.__dirtyPlace) { l.fromLL = null; l.toLL = null; l.before = null; l.after = null; delete l.__dirtyPlace; }
+          // a move whose places changed loses what belonged to the old places, then takes what this trip already knows about the new ones
+          const known = knownSpots(before);
+          for (const d of G.draft) for (const l of (d.legs || [])) {
+            const o = origPlace.get(l) || { from: null, to: null };
+            if ((l.from || "") !== o.from) { l.fromSpot = ""; l.fromLL = null; l.before = null; refillPlaces(l, known, "from"); }
+            if ((l.to || "") !== o.to) { l.toSpot = ""; l.toLL = null; l.after = null; refillPlaces(l, known, "to"); }
+            refillPlaces(l, known, "from"); refillPlaces(l, known, "to"); // fill any blanks left from earlier edits
           }
+          const next = JSON.parse(JSON.stringify(G.draft));
           days.splice(0, days.length, ...next);
           return { transport: Math.max(0, num(cur.transport) + legSum(next) - legSum(before)), lodging: Math.max(0, num(cur.lodging) + staySum(next) - staySum(before)) };
         });
@@ -3176,7 +3219,7 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
               ...legs.map((l, li) => el("div", { class: "gl" + (G.sel.has("l:" + di + ":" + li) ? " picked" : "") }, [
                 pick("l:" + di + ":" + li, (l.from || "") + "から" + (l.to || "") + "への移動"),
                 handle("leg", di, li, (l.from || "？") + " ⇒ " + (l.to || "？")),
-                ...LEG_COLS.map(([k, lab, ph]) => el("label", { class: "gl-f k-" + k }, [el("span", { class: "gl-lab", text: lab }), cell(d.date, k, li, k === "price" ? (num(l.price) || "") : l[k], { label: lab, ph, numeric: k === "price" }, (x) => { if (k === "price") l.price = num(x); else { l[k] = x; if (k === "from" || k === "to") { l.__dirtyPlace = true; if (k === "from") l.fromSpot = ""; else l.toSpot = ""; } } })])),
+                ...LEG_COLS.map(([k, lab, ph]) => el("label", { class: "gl-f k-" + k }, [el("span", { class: "gl-lab", text: lab }), cell(d.date, k, li, k === "price" ? (num(l.price) || "") : l[k], { label: lab, ph, numeric: k === "price" }, (x) => { if (k === "price") l.price = num(x); else l[k] = x; })])),
                 el("button", { type: "button", class: "gx-del", "aria-label": "この移動を消す", text: "✕", onclick: () => { legs.splice(li, 1); G.msg = "移動を1つ消しました（保存するまで元に戻せます）"; draw(); } }),
               ])),
               el("button", { type: "button", class: "mini gx-add", text: "＋ 移動", onclick: () => { const prev = legs[legs.length - 1]; legs.push({ from: prev ? prev.to : "", to: "", mode: "", dep: "", arr: "" }); draw(); const ins = v.querySelectorAll('.gr[data-di="' + di + '"] .gl .gx-in'); if (ins.length) ins[ins.length - LEG_COLS.length + 1].focus(); } }),
@@ -3194,7 +3237,7 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
           counter,
           el("div", { class: "gx-acts" }, [
             saveBtn,
-            el("button", { type: "button", text: "元に戻す", onclick: () => { G.sel.clear(); G.draft = JSON.parse(JSON.stringify(G.orig)); G.msg = "保存されている状態に戻しました"; draw(); } }),
+            el("button", { type: "button", text: "元に戻す", onclick: () => { G.sel.clear(); G.draft = JSON.parse(JSON.stringify(G.orig)); remember(); G.msg = "保存されている状態に戻しました"; draw(); } }),
             el("button", { type: "button", text: "閉じる", onclick: (e) => {
               if (G.dirty && !e.currentTarget.dataset.armed) { e.currentTarget.dataset.armed = "1"; e.currentTarget.textContent = "保存せずに閉じる"; G.msg = "まだ保存していない変更があります。もう一度押すと、変更を捨てて閉じます。"; flash(); return; }
               gridState = null; itinReturn = { id: t._id, date: visibleDate() }; openItin(t);
@@ -3297,6 +3340,7 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
               ]),
               el("div", { class: "leg-links" + (l.booked ? "" : " cand") }, [
                 ...legMapLinks(l, false),
+                (l.fromSpotAuto || l.toSpotAuto) ? el("span", { class: "auto-chip", title: "同じ旅のほかの移動から自動で入れました。違う駅・空港なら「詳細」で直してください。", text: "⚠ " + [l.fromSpotAuto ? "出発" : "", l.toSpotAuto ? "到着" : ""].filter(Boolean).join("・") + "の駅は自動入力・要確認" }) : null,
                 (typeof l.link === "string" && /^https:\/\//.test(l.link)) ? el("a", { href: l.link, target: "_blank", rel: "noopener", text: "予約ページ" }) : null,
                 el("button", { type: "button", class: "mini", text: (Array.isArray(l.before) || Array.isArray(l.after) ? "行き方・" : "") + "詳細・チケット" + (Array.isArray(l.tickets) && l.tickets.length ? "（" + l.tickets.length + "）" : ""), onclick: () => openLeg(t, di, li) }),
               ]),
@@ -3318,6 +3362,7 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
                 itinEdit && num(d.stayCost) ? el("span", { class: "price-chip", text: yen(d.stayCost) }) : null,
                 !inFlight ? el("a", { href: mapUrl(stayQuery(d)), target: "_blank", rel: "noopener", text: "地図" }) : null]),
               addrLine(d),
+              nearBlock(t, di),
             ]) : (!isLast ? el("div", { class: "st todo", text: "宿：未定" }) : null),
             itinEdit && canWrite ? el("div", { class: "day-acts" }, [
               el("button", { type: "button", class: "mini", text: "この日を編集", onclick: () => openDay(t, di) }),
@@ -3581,8 +3626,45 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
       el("span", { class: "acc-to", text: shortSpot(a) + " → " + shortSpot(b) }),
     ]);
   }
+  // when no station is known, let the map pick the main one for that kind of transport
+  const KIND_WORD = { plane: "空港", train: "駅", bus: "バスターミナル", ship: "港" };
+  const guessSpot = (name, l) => { const n = String(name || "").trim(); if (!n) return ""; const w = KIND_WORD[modeKind(l || {})]; return w && !n.includes(w) ? n + " " + w : n; };
+  // nearby stations / stops around a hotel, and the way to the next departure
+  function nearBlock(t, di) {
+    const days = t.days || [], d = days[di];
+    if (!realStay(d)) return null;
+    const q = stayQuery(d); if (!q) return null;
+    const near = (what, label) => el("a", { href: mapUrl(what + " near " + q), target: "_blank", rel: "noopener", class: "near-btn", text: label });
+    // the next move that leaves from this hotel: later today, or the first one on a following day at this hotel's checkout
+    let nl = null;
+    for (let k = di + 1; k < days.length && k <= di + 30; k++) { const ls = days[k] && days[k].legs; if (Array.isArray(ls) && ls.length) { nl = ls[0]; break; } if (days[k] && days[k].stay !== d.stay) { /* keep looking on the move day */ } }
+    let toNext = null;
+    if (nl) {
+      const known = knownSpots(days);
+      const real = nl.fromSpot || (knownFor(known, nl.from, nl) || {}).spot;
+      const dest = real || guessSpot(nl.from, nl);
+      if (dest) toNext = el("div", { class: "near-next" }, [
+        el("span", { class: "near-k", text: "次の出発まで" }),
+        el("a", { href: transitUrl(q, dest), target: "_blank", rel: "noopener", class: "near-btn main", text: "🚆 電車・バスで" }),
+        el("a", { href: walkUrl(q, dest), target: "_blank", rel: "noopener", class: "near-btn", text: "🚶 徒歩" }),
+        el("a", { href: routeUrl(q, dest), target: "_blank", rel: "noopener", class: "near-btn", text: "🚕 車" }),
+        el("span", { class: "near-to", text: "→ " + shortSpot(dest) + (real ? "" : "（地図が選ぶ主な" + (KIND_WORD[modeKind(nl)] || "乗り場") + "・要確認）") }),
+      ]);
+    }
+    return el("details", { class: "near" }, [
+      el("summary", { text: "宿の近くの駅・バス停と、次の出発までの行き方" }),
+      el("div", { class: "near-body" }, [
+        el("div", { class: "near-row" }, [el("span", { class: "near-k", text: "近くを探す" }), near("train station", "🚉 駅"), near("metro station", "🚇 地下鉄"), near("bus stop", "🚌 バス停"), near("taxi stand", "🚕 タクシー乗り場")]),
+        toNext,
+      ]),
+    ]);
+  }
   function legContext(t, di, li) {
     const days = Array.isArray(t.days) ? t.days : [];
+    // a station left blank falls back to the one this trip already uses for the same place
+    const known = knownSpots(days);
+    const spotFrom = (x) => (x && x.fromSpot) || ((x && knownFor(known, x.from, x)) || {}).spot || guessSpot(x && x.from, x);
+    const spotTo = (x) => (x && x.toSpot) || ((x && knownFor(known, x.to, x)) || {}).spot || guessSpot(x && x.to, x);
     const day = days[di] || {}, legs = Array.isArray(day.legs) ? day.legs : [], l = legs[li] || {};
     const stayQ = (d) => d && d.stay && d.stay !== "機内泊" && !/宿なし|宿泊費なし|未定/.test(d.stay) ? stayQuery(d) : (d && d.stayMap) || "";
     const norm = (x) => String(x || "").trim().toLowerCase();
@@ -3684,7 +3766,7 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
         el("div", { class: "field" }, [el("label", { for: "lg_date", text: "移動する日" }), (() => { const sel = el("select", { id: "lg_date", disabled: canWrite ? null : "disabled" }, (t.days || []).filter((x) => x && validDate(x.date)).map((x) => new Option(jpDate(x.date) + (x.route ? "　" + x.route : ""), x.date))); sel.value = day.date; return sel; })()]),
         f("lg_dep", "出発時刻", l.dep, { placeholder: "22:45" }), f("lg_arr", "到着時刻", l.arr, { placeholder: "5:50" }),
         f("lg_dur", "所要時間（空欄なら自動で計算）", l.dur, { placeholder: (() => { const r = legDur(Object.assign({}, l, { dur: "" }), day.date); return r ? "自動：" + durText(r) + "（直すときは 2:15 の形で）" : "例：2:15"; })() })]),
-      el("div", { class: "grid2" }, [f("lg_fromSpot", "出発する駅・空港（地図で検索する名前）", l.fromSpot), f("lg_toSpot", "到着する駅・空港", l.toSpot)]),
+      el("div", { class: "grid2" }, [f("lg_fromSpot", "出発する駅・空港（地図で検索する名前）" + (l.fromSpotAuto ? "　⚠自動入力・要確認" : ""), l.fromSpot), f("lg_toSpot", "到着する駅・空港" + (l.toSpotAuto ? "　⚠自動入力・要確認" : ""), l.toSpot)]),
       el("div", { class: "grid2" }, [f("lg_ref", "予約番号", l.ref), f("lg_seat", "座席・号車", l.seat), f("lg_terminal", "ターミナル・ホーム", l.terminal)]),
       el("div", { class: "grid2" }, [f("lg_price", "料金（円）", num(l.price) || "", { type: "number", min: "0", step: "1", inputmode: "numeric" }), f("lg_km", "距離（km・概算）", num(l.km) || "", { type: "number", min: "0", step: "1", inputmode: "numeric" })]),
       el("div", { class: "field" }, [el("label", { for: "lg_note", text: "メモ" }), el("textarea", { id: "lg_note", disabled: canWrite ? null : "disabled" }, [l.note || ""])]),
@@ -3703,11 +3785,12 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const val = (id) => $("#" + id).value.trim();
-      const patch = { cabin: $("#lg_cabin").value, from: val("lg_from"), to: val("lg_to"), mode: val("lg_mode"), number: val("lg_number"), dep: val("lg_dep"), arr: val("lg_arr"), dur: val("lg_dur"), fromSpot: val("lg_fromSpot"), toSpot: val("lg_toSpot"), ref: val("lg_ref"), seat: val("lg_seat"), terminal: val("lg_terminal"), price: num(val("lg_price")), km: num(val("lg_km")), note: val("lg_note") };
+      const patch = { cabin: $("#lg_cabin").value, from: val("lg_from"), to: val("lg_to"), mode: val("lg_mode"), number: val("lg_number"), dep: val("lg_dep"), arr: val("lg_arr"), dur: val("lg_dur"), fromSpot: val("lg_fromSpot"), toSpot: val("lg_toSpot"), fromSpotAuto: false, toSpotAuto: false, ref: val("lg_ref"), seat: val("lg_seat"), terminal: val("lg_terminal"), price: num(val("lg_price")), km: num(val("lg_km")), note: val("lg_note") };
       // a different city: drop what belonged to the old place (station, coordinates, directions, distance, booking)
       const fromCh = patch.from !== (l.from || ""), toCh = patch.to !== (l.to || "");
-      if (fromCh) { patch.fromLL = null; patch.before = null; if (patch.fromSpot === (l.fromSpot || "")) patch.fromSpot = ""; }
-      if (toCh) { patch.toLL = null; patch.after = null; if (patch.toSpot === (l.toSpot || "")) patch.toSpot = ""; }
+      const known = knownSpots(t.days);
+      if (fromCh) { patch.fromLL = null; patch.before = null; if (patch.fromSpot === (l.fromSpot || "")) patch.fromSpot = ""; refillPlaces(Object.assign(patch, { from: patch.from }), known, "from"); }
+      if (toCh) { patch.toLL = null; patch.after = null; if (patch.toSpot === (l.toSpot || "")) patch.toSpot = ""; refillPlaces(patch, known, "to"); }
       if (fromCh || toCh) {
         if (patch.km === num(l.km)) patch.km = 0;
         patch.link = "";
