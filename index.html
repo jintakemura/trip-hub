@@ -630,7 +630,7 @@ span.bk{cursor:default}
 .overlay.full{padding:0}
 .overlay.full .sheet{width:100%;max-width:none;height:100%;max-height:none;border-radius:0;padding:max(20px,env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-right,0px)) max(24px,env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px))}
 .overlay.full .sheet > *{max-width:1280px;margin-left:auto;margin-right:auto;width:100%;box-sizing:border-box}
-.itin.wide li{grid-template-columns:120px minmax(0,1fr)}
+.itin.wide > li{grid-template-columns:120px minmax(0,1fr)}
 .itin.wide .d{font-size:15px}
 .itin.wide .r{font-size:18px}
 @media (min-width:1000px){
@@ -708,6 +708,36 @@ button.mc-cell.past{opacity:.72}
 .near-btn{font-size:13px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none;white-space:nowrap}
 .near-btn.main{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:700}
 .near-to{flex-basis:100%;font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.ss{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.ss-pill{display:inline-flex;align-items:center;gap:2px;font-size:12px;font-weight:700;color:#fff;background:var(--sc);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.ss-arrow{font-size:11px;color:var(--muted)}
+.ss-tot{font-size:12px;color:var(--muted);margin-left:4px}
+.acc-sums{display:grid;gap:4px;margin:4px 0}
+.acc-sum{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.acc-sum-k{font-size:11px;color:var(--muted);min-width:4.5em}
+.st-line{list-style:none;margin:6px 0;padding:0;display:grid;gap:0}
+.st-line li{display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;align-items:start;padding:6px 0 6px 10px;border-left:4px solid var(--sc);margin-left:4px}
+.stl-badge{display:inline-flex;align-items:center;gap:4px;justify-content:center;font-size:12px;font-weight:700;color:#fff;background:var(--sc);border-radius:8px;padding:3px 6px;white-space:nowrap}
+.stl-body{display:grid;gap:1px;min-width:0}
+.stl-body b{font-size:14px;overflow-wrap:anywhere}
+.stl-meta{font-size:12px;color:var(--muted)}
+.steps-ed{display:grid;gap:8px}
+.se-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px 8px;align-items:end;padding:8px;border:1px solid var(--line);border-left:4px solid var(--sc,var(--line));border-radius:10px}
+.se-row > select{grid-column:1/3}
+.se-row .se-btns{grid-column:3/5;justify-content:flex-end}
+.se-row .se-f:nth-of-type(1){grid-column:1/3}
+.se-row .se-f:nth-of-type(2){grid-column:3/5}
+.se-row .se-f:nth-of-type(3){grid-column:1/3}
+.se-row select,.se-row input{font:inherit;font-size:14px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);min-width:0;width:100%;box-sizing:border-box}
+.se-btns{display:flex;gap:4px;align-self:end}
+.se-f{display:grid;gap:2px;min-width:0;font-size:11px;color:var(--muted)}
+.se-row > select{align-self:end}
+.se-add{display:flex;flex-wrap:wrap;gap:6px}
+.se-add .mini[style]{border-color:var(--sc);color:var(--sc)}
+.ai-btn{border-color:#7b4bb7;color:#7b4bb7}
+@media (max-width:700px){
+  .st-line li{grid-template-columns:84px minmax(0,1fr)}
+}
 .auto-chip{font-size:12px;font-weight:600;color:#9a6b00;background:color-mix(in srgb,#f5c542 22%,var(--surface));border:1px solid #e0a82e;border-radius:999px;padding:2px 8px}
 .leg-edit{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
 .itin.wide .legbox > .leg-edit{grid-column:1}
@@ -721,7 +751,7 @@ button.mc-cell.past{opacity:.72}
 .mismatch span{flex:1 1 220px;min-width:0}
 .leg-links{gap:8px 16px;line-height:1.7}
 .leg-links a{overflow-wrap:anywhere}
-.itin li{padding:18px 0}
+.itin > li{padding:18px 0}
 .itin .r{font-size:17px;line-height:1.5;margin-bottom:4px}
 .itin .st{display:grid;gap:4px;margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--bg);line-height:1.6}
 .itin .st .bk{justify-self:start;margin:0}
@@ -1038,7 +1068,7 @@ legend{font-size:12px;color:var(--muted);padding:0 6px}
 .itin-sum{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:13px;color:var(--muted)}
 .itin-sum b{color:var(--ink);font-family:var(--mono);font-weight:500}
 .itin{display:grid;gap:0;margin:0;padding:0;list-style:none}
-.itin li{display:grid;grid-template-columns:76px 1fr;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.itin > li{display:grid;grid-template-columns:76px 1fr;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
 .itin .d{font-family:var(--mono);font-size:13px;line-height:1.4}
 .itin .d small{display:block;color:var(--muted);font-family:var(--body);font-size:11px}
 .itin .r{font-weight:700;overflow-wrap:anywhere}
@@ -1150,7 +1180,7 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
   .p-facts .pf{min-width:0}
   .pf b{overflow-wrap:anywhere}
   .ticket .body b,.ticket .body span{overflow-wrap:anywhere}
-  .itin li{grid-template-columns:1fr !important;gap:6px}
+  .itin > li{grid-template-columns:1fr !important;gap:6px}
   .itin .d{display:flex;align-items:baseline;gap:8px;font-size:15px;font-weight:700}
   .itin .d small{font-size:12px;font-weight:500}
   .sheet{padding:18px 16px}
@@ -3649,6 +3679,7 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
         el("a", { href: walkUrl(q, dest), target: "_blank", rel: "noopener", class: "near-btn", text: "🚶 徒歩" }),
         el("a", { href: routeUrl(q, dest), target: "_blank", rel: "noopener", class: "near-btn", text: "🚕 車" }),
         el("span", { class: "near-to", text: "→ " + shortSpot(dest) + (real ? "" : "（地図が選ぶ主な" + (KIND_WORD[modeKind(nl)] || "乗り場") + "・要確認）") }),
+        validSteps(nl.stepsBefore).length ? stepsSummary(nl.stepsBefore) : null,
       ]);
     }
     return el("details", { class: "near" }, [
@@ -3690,11 +3721,99 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
     ], here);
     return { beforeFrom: before ? before.q : "", beforeKind: before ? before.k : "", beforeTo: start, afterFrom: here, afterTo: after ? after.q : "", afterKind: after ? after.k : "" };
   }
+  // ---------- step-by-step access routes (walk → metro → bus …), shown with one colour per kind ----------
+  const STEP_MODES = {
+    walk: { icon: "🚶", label: "徒歩", c: "#6b7780" },
+    metro: { icon: "🚇", label: "地下鉄", c: "#7b4bb7" },
+    train: { icon: "🚆", label: "電車", c: "#2f6fc0" },
+    tram: { icon: "🚊", label: "トラム", c: "#d9822b" },
+    bus: { icon: "🚌", label: "バス", c: "#2e9e4f" },
+    shuttle: { icon: "🚐", label: "シャトル", c: "#1f8a86" },
+    taxi: { icon: "🚕", label: "タクシー・配車", c: "#c9a000" },
+    ferry: { icon: "⛴", label: "船", c: "#2a8fbf" },
+  };
+  const validSteps = (a) => Array.isArray(a) ? a.filter((x) => x && STEP_MODES[x.m]) : [];
+  const stepsTotal = (a) => validSteps(a).reduce((s, x) => s + num(x.min), 0);
+  // compact one-line summary: 🚶5分 → 🚇L1 8分 → 🚶3分
+  function stepsSummary(arr) {
+    const a = validSteps(arr); if (!a.length) return null;
+    const out = [];
+    a.forEach((x, i) => {
+      if (i) out.push(el("span", { class: "ss-arrow", "aria-hidden": "true", text: "→" }));
+      const M = STEP_MODES[x.m];
+      out.push(el("span", { class: "ss-pill", style: "--sc:" + M.c, title: M.label }, [M.icon + " ", x.m === "walk" || x.m === "taxi" ? M.label : (x.line || M.label), num(x.min) ? " " + num(x.min) + "分" : ""]));
+    });
+    const tot = stepsTotal(a);
+    if (tot) out.push(el("span", { class: "ss-tot", text: "計 約" + tot + "分" }));
+    return el("div", { class: "ss" }, out);
+  }
+  // the full timeline: one row per step with a coloured badge
+  function stepsTimeline(arr, ai) {
+    const a = validSteps(arr); if (!a.length) return null;
+    return el("ol", { class: "st-line" + (ai ? " ai" : "") }, a.map((x) => {
+      const M = STEP_MODES[x.m];
+      const where = x.from || x.to ? (x.from || "") + (x.to ? " → " + x.to : "") : "";
+      return el("li", { style: "--sc:" + M.c }, [
+        el("span", { class: "stl-badge" }, [el("span", { "aria-hidden": "true", text: M.icon }), M.label]),
+        el("div", { class: "stl-body" }, [
+          el("b", { text: [x.m === "walk" ? "" : x.line, where].filter(Boolean).join("　") || M.label }),
+          el("span", { class: "stl-meta", text: [num(x.min) ? "約" + num(x.min) + "分" : "", x.fare || "", x.note || ""].filter(Boolean).join("・") }),
+        ]),
+      ]);
+    }));
+  }
+  // editor rows inside the move form
+  const seF = (label, input) => el("label", { class: "se-f" }, [el("span", { text: label }), input]);
+  function stepsEditor(arr, title, onAi) {
+    const rows = validSteps(arr).map((x) => Object.assign({}, x));
+    const box = el("fieldset", { class: "steps-ed" });
+    const draw = () => {
+      box.replaceChildren(
+        el("legend", { text: title }),
+        ...rows.map((x, i) => el("div", { class: "se-row", style: "--sc:" + STEP_MODES[x.m].c }, [
+          (() => { const sel = el("select", { "aria-label": "手段" }, Object.entries(STEP_MODES).map(([k, M]) => new Option(M.icon + " " + M.label, k))); sel.value = x.m; sel.addEventListener("change", () => { x.m = sel.value; sel.parentElement.style.setProperty("--sc", STEP_MODES[x.m].c); }); return sel; })(),
+          seF("路線・番号", el("input", { placeholder: "例：L1、27番", value: x.line || "", oninput: (e) => { x.line = e.target.value; } })),
+          seF("乗る所", el("input", { placeholder: "例：Sol", value: x.from || "", oninput: (e) => { x.from = e.target.value; } })),
+          seF("降りる所", el("input", { placeholder: "例：Atocha", value: x.to || "", oninput: (e) => { x.to = e.target.value; } })),
+          seF("分", el("input", { placeholder: "分", inputmode: "numeric", value: num(x.min) || "", class: "se-min", oninput: (e) => { x.min = num(e.target.value); } })),
+          seF("料金", el("input", { placeholder: "例：€1.5", value: x.fare || "", class: "se-fare", oninput: (e) => { x.fare = e.target.value; } })),
+          el("div", { class: "se-btns" }, [
+            el("button", { type: "button", class: "mini", "aria-label": "上へ", text: "↑", disabled: i ? null : "disabled", onclick: () => { rows.splice(i - 1, 0, rows.splice(i, 1)[0]); draw(); } }),
+            el("button", { type: "button", class: "mini danger", "aria-label": "この手順を消す", text: "✕", onclick: () => { rows.splice(i, 1); draw(); } }),
+          ]),
+        ])),
+        el("div", { class: "se-add" }, [
+          ...Object.entries(STEP_MODES).map(([k, M]) => el("button", { type: "button", class: "mini", style: "--sc:" + M.c, text: "＋" + M.icon + M.label, onclick: () => { rows.push({ m: k }); draw(); const ins = box.querySelectorAll(".se-row"); const last = ins[ins.length - 1]; if (last) last.querySelector("input").focus(); } })),
+          onAi ? el("button", { type: "button", class: "mini ai-btn", text: "✨ AIで下書き", onclick: async (e) => { const b = e.currentTarget; b.disabled = true; b.textContent = "考え中…"; const got = await onAi(); b.disabled = false; b.textContent = "✨ AIで下書き"; if (got && got.length) { rows.splice(0, rows.length, ...got); draw(); } } }) : null,
+        ]),
+        el("div", { class: "hint", text: "乗る順番に並べてください。地下鉄・バス・電車は色と絵で分かれて旅程に表示されます。" }),
+      );
+    };
+    draw();
+    box.value = () => rows.filter((x) => STEP_MODES[x.m]).map((x) => ({ m: x.m, line: (x.line || "").trim(), from: (x.from || "").trim(), to: (x.to || "").trim(), min: num(x.min), fare: (x.fare || "").trim() }));
+    return box;
+  }
+  async function aiSteps(fromQ, toQ, when) {
+    const smp = await getSample(); if (!smp || !fromQ || !toQ) return null;
+    const prompt = [
+      "旅行者向けに、出発地点から目的地までの公共交通の乗り方を、手順ごとに分けて日本語で答えてください。",
+      "出発地点: " + fromQ, "目的地: " + toQ, when ? "時間帯: " + when : "",
+      "ルール:",
+      "- m は walk / metro / train / tram / bus / shuttle / taxi / ferry のどれか。地下鉄と近郊電車とバスは必ず分ける。",
+      "- line は路線名や番号（地下鉄の L1、バスの27番、空港線など）。分からなければ空文字。from/to は乗る駅・停留所と降りる駅・停留所。",
+      "- min は目安の分（整数）。fare は目安の料金（現地通貨、例 \"€1.5\"）。確かでない所は空にする。",
+      "- 歩きが短すぎる場合は省略してよい。乗り換えは別の手順にする。最大6手順。",
+      "- 返答は次のJSONだけ: {\"steps\": [{\"m\": string, \"line\": string, \"from\": string, \"to\": string, \"min\": number, \"fare\": string}]}",
+    ].filter(Boolean).join("\n");
+    try { const r = await smp.json(prompt, { modelTier: "default" }); return validSteps(r && r.steps).slice(0, 6).map((x) => ({ m: x.m, line: String(x.line || "").slice(0, 40), from: String(x.from || "").slice(0, 60), to: String(x.to || "").slice(0, 60), min: num(x.min), fare: String(x.fare || "").slice(0, 20) })); }
+    catch (e) { return null; }
+  }
   function accessBlock(t, di, li, compact) {
     const l = t.days[di].legs[li];
     const c = legContext(t, di, li);
     const list = (arr) => Array.isArray(arr) && arr.length ? el("ul", { class: "acc-list" }, arr.filter((x) => typeof x === "string").map((x) => { const m = /^【(.+?)】(.*)$/.exec(x); return m ? el("li", { class: "acc-key" }, [el("span", { class: "sm-tag", text: m[1] }), m[2]]) : el("li", { text: x }); })) : null;
     const before = list(l.before), after = list(l.after);
+    const sB = stepsTimeline(l.stepsBefore, l.stepsBeforeAI), sA = stepsTimeline(l.stepsAfter, l.stepsAfterAI);
     const routeLinks = (a, b, label) => el("div", { class: "acc-links" }, [
       el("a", { href: transitUrl(a, b), target: "_blank", rel: "noopener", class: "acc-btn", text: label + "（電車・バス）" }),
       el("a", { href: walkUrl(a, b), target: "_blank", rel: "noopener", class: "acc-btn sub", text: "徒歩" }),
@@ -3703,13 +3822,21 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
     ]);
     const bLink = c.beforeFrom && c.beforeTo ? routeLinks(c.beforeFrom, c.beforeTo, c.beforeKind + "から乗り場までのルート") : null;
     const aLink = c.afterFrom && c.afterTo ? routeLinks(c.afterFrom, c.afterTo, "到着後、" + c.afterKind + "までのルート") : null;
-    if (!before && !after && !bLink && !aLink) return null;
+    if (!before && !after && !bLink && !aLink && !sB && !sA) return null;
+    const aiTag = (on) => on ? el("span", { class: "ai-chip", text: "AI下書き・要確認" }) : null;
     const box = el("div", { class: "acc" + (compact ? " compact" : "") }, [
-      (before || bLink) ? el("div", { class: "acc-sec" }, [el("div", { class: "acc-h", text: "乗り場までの行き方" }), before, bLink]) : null,
-      (after || aLink) ? el("div", { class: "acc-sec" }, [el("div", { class: "acc-h", text: "到着後の行き方" }), after, aLink]) : null,
+      (before || bLink || sB) ? el("div", { class: "acc-sec" }, [el("div", { class: "acc-h" }, ["乗り場までの行き方", aiTag(sB && l.stepsBeforeAI)]), sB, before, bLink]) : null,
+      (after || aLink || sA) ? el("div", { class: "acc-sec" }, [el("div", { class: "acc-h" }, ["到着後の行き方", aiTag(sA && l.stepsAfterAI)]), sA, after, aLink]) : null,
     ]);
     if (!compact) return box;
-    return el("details", { class: "acc-details" }, [el("summary", { text: "行き方を見る" + (before || after ? "" : "（地図のルート）") }), box]);
+    const sum = el("div", { class: "acc-sums" }, [
+      validSteps(l.stepsBefore).length ? el("div", { class: "acc-sum" }, [el("span", { class: "acc-sum-k", text: "乗り場まで" }), stepsSummary(l.stepsBefore)]) : null,
+      validSteps(l.stepsAfter).length ? el("div", { class: "acc-sum" }, [el("span", { class: "acc-sum-k", text: "到着後" }), stepsSummary(l.stepsAfter)]) : null,
+    ]);
+    return el("div", { class: "acc-wrap" }, [
+      sum.childNodes.length ? sum : null,
+      el("details", { class: "acc-details" }, [el("summary", { text: "行き方を見る" + (before || after || sB || sA ? "" : "（地図のルート）") }), box]),
+    ]);
   }
   function openLeg(t0, di, li, toForm) {
     const t = trips.find((x) => x._id === t0._id) || t0;
@@ -3757,6 +3884,11 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
       }
       openLeg(t, di, li);
     });
+    const ctx = legContext(t, di, li);
+    const aiOn = !!sampleFn || sampleFn === undefined;
+    const stepsBeforeEd = canWrite ? stepsEditor(l.stepsBefore, "乗り場までの行き方（手順）" + (ctx.beforeFrom ? "：" + shortSpot(ctx.beforeFrom) + " → " + shortSpot(ctx.beforeTo) : ""), aiOn ? async () => { const r = await aiSteps(ctx.beforeFrom, ctx.beforeTo || l.fromSpot || l.from, l.dep ? l.dep + " 発の前" : ""); if (r && r.length) aiFlags.before = true; else say("AIの下書きは、この表示では使えないか、うまく作れませんでした。手で入れてください。"); return r; } : null) : null;
+    const stepsAfterEd = canWrite ? stepsEditor(l.stepsAfter, "到着後の行き方（手順）" + (ctx.afterTo ? "：" + shortSpot(ctx.afterFrom) + " → " + shortSpot(ctx.afterTo) : ""), aiOn ? async () => { const r = await aiSteps(ctx.afterFrom || l.toSpot || l.to, ctx.afterTo, l.arr ? l.arr + " 着の後" : ""); if (r && r.length) aiFlags.after = true; else say("AIの下書きは、この表示では使えないか、うまく作れませんでした。手で入れてください。"); return r; } : null) : null;
+    const aiFlags = { before: !!l.stepsBeforeAI, after: !!l.stepsAfterAI };
     const form = el("form", { class: "legform" }, [
       el("div", { class: "grid2" }, [f("lg_from", "出発地", l.from, { placeholder: "例：マドリード" }), f("lg_to", "到着地", l.to, { placeholder: "例：バレンシア" })]),
       el("label", { class: "clear-old", id: "lg_clearRow", hidden: "hidden" }, [el("input", { type: "checkbox", id: "lg_clear", checked: "checked" }), el("span", { text: "行き先が変わるので、前の便名・時刻・予約番号・座席・料金・予約済みの印も消す（駅・空港名、行き方、距離は自動で消えます）" })]),
@@ -3770,6 +3902,7 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
       el("div", { class: "grid2" }, [f("lg_ref", "予約番号", l.ref), f("lg_seat", "座席・号車", l.seat), f("lg_terminal", "ターミナル・ホーム", l.terminal)]),
       el("div", { class: "grid2" }, [f("lg_price", "料金（円）", num(l.price) || "", { type: "number", min: "0", step: "1", inputmode: "numeric" }), f("lg_km", "距離（km・概算）", num(l.km) || "", { type: "number", min: "0", step: "1", inputmode: "numeric" })]),
       el("div", { class: "field" }, [el("label", { for: "lg_note", text: "メモ" }), el("textarea", { id: "lg_note", disabled: canWrite ? null : "disabled" }, [l.note || ""])]),
+      stepsBeforeEd, stepsAfterEd,
       el("fieldset", {}, [el("legend", { text: "チケット（PDF・画像）" }), list, canWrite && assets ? el("div", { style: "margin-top:10px" }, [el("label", { for: "lg_file", class: "muted", style: "font-size:12px;display:block;margin-bottom:4px", text: "Eチケットや予約確認のPDF・スクリーンショットを追加" }), fileIn]) : el("div", { class: "muted", style: "font-size:12px;margin-top:8px", text: "この表示ではチケットを追加できません。" })]),
       msg,
       el("div", { class: "sheet-actions" }, [
@@ -3785,7 +3918,10 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const val = (id) => $("#" + id).value.trim();
-      const patch = { cabin: $("#lg_cabin").value, from: val("lg_from"), to: val("lg_to"), mode: val("lg_mode"), number: val("lg_number"), dep: val("lg_dep"), arr: val("lg_arr"), dur: val("lg_dur"), fromSpot: val("lg_fromSpot"), toSpot: val("lg_toSpot"), fromSpotAuto: false, toSpotAuto: false, ref: val("lg_ref"), seat: val("lg_seat"), terminal: val("lg_terminal"), price: num(val("lg_price")), km: num(val("lg_km")), note: val("lg_note") };
+      const patch = { cabin: $("#lg_cabin").value, from: val("lg_from"), to: val("lg_to"), mode: val("lg_mode"), number: val("lg_number"), dep: val("lg_dep"), arr: val("lg_arr"), dur: val("lg_dur"), fromSpot: val("lg_fromSpot"), toSpot: val("lg_toSpot"), fromSpotAuto: false, toSpotAuto: false,
+        stepsBefore: stepsBeforeEd ? stepsBeforeEd.value() : (l.stepsBefore || []), stepsAfter: stepsAfterEd ? stepsAfterEd.value() : (l.stepsAfter || []),
+        stepsBeforeAI: stepsBeforeEd ? (aiFlags.before && JSON.stringify(stepsBeforeEd.value()) !== JSON.stringify(validSteps(l.stepsBefore))) || (!!l.stepsBeforeAI && JSON.stringify(stepsBeforeEd.value()) === JSON.stringify(validSteps(l.stepsBefore))) : !!l.stepsBeforeAI,
+        stepsAfterAI: stepsAfterEd ? (aiFlags.after && JSON.stringify(stepsAfterEd.value()) !== JSON.stringify(validSteps(l.stepsAfter))) || (!!l.stepsAfterAI && JSON.stringify(stepsAfterEd.value()) === JSON.stringify(validSteps(l.stepsAfter))) : !!l.stepsAfterAI, ref: val("lg_ref"), seat: val("lg_seat"), terminal: val("lg_terminal"), price: num(val("lg_price")), km: num(val("lg_km")), note: val("lg_note") };
       // a different city: drop what belonged to the old place (station, coordinates, directions, distance, booking)
       const fromCh = patch.from !== (l.from || ""), toCh = patch.to !== (l.to || "");
       const known = knownSpots(t.days);
@@ -3951,6 +4087,7 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
       if (c === false) canWrite = false;
     } catch (e) {}
     try { assets = await window.claude.use("assets"); } catch (e) { assets = null; }
+    getSample();
     const toRows = (snap) => snap.docs.map((d) => Object.assign({ _id: d.id }, d.data()));
     db.collection("trips").onSnapshot((snap) => { trips = toRows(snap); tripsReady = true; render(); }, () => { tripsReady = true; setStatus("旅の記録を読み込めませんでした。ページを開き直してください。"); render(); });
     db.collection("plans").onSnapshot((snap) => { plans = toRows(snap); plansReady = true; renderPlans(); }, () => { plansReady = true; renderPlans(); });
