@@ -80,7 +80,33 @@
     const m = h("div", { class: "sa-msg" + (ok ? " ok" : "") }, [msg || ""]);
     const say = (t, good) => { m.textContent = t || ""; m.className = "sa-msg" + (good ? " ok" : ""); };
     const card = h("div", { class: "sa-card" });
-    if (mode === "invite") {
+    if (mode === "reset" || mode === "password") {
+      const changing = mode === "password";
+      const field = h("input", changing
+        ? {id:"sa_new",type:"password",autocomplete:"new-password",minlength:"8",required:true}
+        : {id:"sa_reset_email",type:"email",autocomplete:"email",required:true});
+      const submit = h("button", {class:"go",type:"submit",text:changing ? "パスワードを保存" : "再設定メールを送る"});
+      const form = h("form", {}, [h("label", {for:field.id,text:changing ? "新しいパスワード（8文字以上）" : "登録したメールアドレス"}),field,submit]);
+      form.addEventListener("submit", async e => {
+        e.preventDefault();
+        if (submit.disabled) return;
+        submit.disabled = true;
+        try {
+          if (changing) {
+            const {error} = await sb.auth.updateUser({password:field.value});
+            if (error) throw error;
+            recoverySession = false;
+            await afterLogin();
+          } else {
+            const {error} = await sb.auth.resetPasswordForEmail(field.value.trim(), {redirectTo:location.origin + location.pathname});
+            if (error) throw error;
+            showGate("login","登録したアドレスに届くメールのリンクから、新しいパスワードを設定してください。",true);
+          }
+        } catch { say(changing ? "パスワードを保存できませんでした。再設定メールを再度リクエストしてください。" : "メールを送れませんでした。少し待ってもう一度お試しください。"); }
+        finally { submit.disabled = false; }
+      });
+      card.append(h("h1",{text:"パスワードの再設定"}),form,h("button",{class:"sa-btn",style:"margin-top:12px",text:"ログインに戻る",onclick:() => { recoverySession = false; showGate("login"); }}),m);
+    } else if (mode === "invite") {
       const code = h("input", { id: "sa_code", autocomplete: "off", placeholder: "招待コード" });
       const go = h("button", { class: "go", text: "はじめる", onclick: async () => {
         go.disabled = true; say("");
@@ -124,12 +150,13 @@
         body.replaceChildren(...[
           h("div", { class: "sa-tabs" }, [
             h("button", { "aria-pressed": String(tab === "login"), text: "ログイン", onclick: () => { tab = "login"; draw(); } }),
-            h("button", { "aria-pressed": String(tab === "signup"), text: "はじめて使う", onclick: () => { tab = "signup"; draw(); } }),
+            h("button", { "aria-pressed": String(tab === "signup"), text: "招待コードで新規登録", onclick: () => { tab = "signup"; draw(); } }),
           ]),
           h("label", { for: "sa_email", text: "メールアドレス" }), em,
           h("label", { for: "sa_pw", text: "パスワード" }), pw,
           code ? h("label", { for: "sa_code", text: "招待コード" }) : null, code,
           go,
+          tab === "login" ? h("button", {class:"sa-btn",style:"margin-top:12px",text:"パスワードを忘れた方",onclick:() => showGate("reset")}) : null,
         ].filter(Boolean));
         [em, pw, code].forEach((x) => x && x.addEventListener("keydown", (ev) => { if (ev.key === "Enter") go.click(); }));
       };
@@ -145,7 +172,9 @@
     const { data } = await sb.auth.getSession();
     const s = data && data.session; if (!s) { showGate("login"); return; }
     uid = s.user.id; email = s.user.email || "";
-    if (!(await isMember())) {
+    const member = await isMember();
+    if (recoverySession) { showGate("password"); return; }
+    if (!member) {
       const pending = LS.get("triphub-code");
       if (!(pending && (await redeem(pending)))) { showGate("invite", pending ? "招待コードが違うか、使える人数を超えています。正しいコードを入れてください。" : ""); return; }
     }
@@ -361,6 +390,13 @@
     },
   };
 
+  let recoverySession = false;
+  sb.auth.onAuthStateChange(event => {
+    if (event === "PASSWORD_RECOVERY") {
+      recoverySession = true;
+      if (document.body) showGate("password");
+    }
+  });
   // ---------- start ----------
   const start = async () => {
     if (shared) {
@@ -371,7 +407,8 @@
       return;
     }
     const { data } = await sb.auth.getSession();
-    if (data && data.session) await afterLogin(); else showGate("login");
+    if (recoverySession) showGate("password");
+    else if (data && data.session) await afterLogin(); else showGate("login");
   };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
 })();
@@ -1186,6 +1223,36 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
   .sheet{padding:18px 16px}
   .p-facts{grid-template-columns:1fr 1fr}
 }
+/* Keep dismissal within reach even in a long, non-fullscreen itinerary. */
+.overlay{grid-template-rows:minmax(0,1fr);grid-template-columns:minmax(0,1fr)}
+.sheet{overscroll-behavior:contain;min-height:0;min-width:0}
+html:has(#overlay:not([hidden])){overflow:hidden}
+#itinClose{display:none;white-space:nowrap;min-height:44px;font-weight:700}
+.overlay[data-itinerary] .sheet-head{position:sticky;top:0;z-index:8;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--surface);padding-block:4px;border-bottom:1px solid var(--line);align-self:start}
+.overlay[data-itinerary] #sheetTitle{min-width:0;margin:0;padding:0;font-size:clamp(17px,3vw,23px);line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.overlay[data-itinerary] #itinClose{display:block;flex:none}
+.overlay[data-itinerary] .sheet{scroll-padding-top:66px}
+@media(min-width:641px){
+  .overlay.full[data-itinerary="overview"] #itinClose{display:none}
+  .overlay.full[data-itinerary="overview"] .sheet-head{position:static;padding-right:min(55%,550px)}
+}
+@media(max-width:640px){.overlay.full[data-itinerary] .full-float{display:none}}
+.overlay.full[data-itinerary] .full-btn{display:inline-flex}
+#tripExtras{display:grid;gap:14px}
+#tripExtras summary,#quickAdd summary{cursor:pointer;padding:9px 0;font-weight:700}
+#tripExtras[open] > * + *{margin-top:10px}
+#quickAdd{grid-column:1/-1}
+#quickAdd button{color:var(--ink)}
+#quickAdd .tools{justify-content:flex-start}
+#monthAgenda,.mobile-cal-hint{display:none}
+.travel-now{order:-1;display:grid;gap:8px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.travel-now a{display:inline-block;padding:6px}
+@media(max-width:640px){
+  #monthAgenda:not(:empty){display:grid;gap:6px;border-top:1px solid var(--line);padding-top:10px}
+  .mc-cell[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--ink)}
+  .desktop-cal-hint{display:none}.mobile-cal-hint{display:inline}
+  #tripForm .sheet-actions div{flex-wrap:wrap}
+}
 </style>
 
 <div class="wrap">
@@ -1207,10 +1274,16 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
       <select id="yearSel"></select>
       <button class="ghost" id="clearSamples" hidden>サンプルを消す</button>
     </div>
+    <details id="quickAdd" hidden><summary>＋ 追加</summary><div class="tools">
+      <button type="button" data-add="addTrip">日程が決まった旅</button>
+      <button type="button" data-add="addPlan">候補を比較する</button>
+      <button type="button" data-add="addWish">行きたい場所をメモ</button>
+    </div></details>
     <div class="hero-stats" id="heroStats"></div>
   </header>
   <div class="status" id="status" hidden></div>
 
+  <section id="travelNow" class="travel-now" hidden aria-label="旅行中の予定"></section>
   <section id="moves" hidden>
     <div class="sec-head"><h2><span class="h-ico" style="--ic:var(--coral)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l18-8-7 18-2-8-9-2z"/></svg></span><span id="movesTitle">今日・明日の移動</span></h2><span class="muted" id="movesNote" style="font-size:13px"></span></div>
     <div class="moves" id="movesBody"></div>
@@ -1242,7 +1315,7 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
   <section id="monthSec">
     <div class="sec-head"><h2><span class="h-ico" style="--ic:var(--coral)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M7 14h3M14 14h3M7 17h3"/></svg></span><span>旅のカレンダー</span></h2>
       <div class="tools mc-tools"><button type="button" id="monthPrev" aria-label="前の月">◀</button><b id="monthTitle" class="mc-title">—</b><button type="button" id="monthNext" aria-label="次の月">▶</button><button type="button" id="monthNow" class="mini">今月</button><button type="button" id="monthTrip" class="mini">次の旅の月</button></div></div>
-    <div class="mc-card"><div class="mc-grid" id="monthGrid"></div><div class="mc-foot"><span id="monthNote"></span><span class="mc-key"><span class="mc-ok">✓</span> 予約済み　🛏 宿　日付を押すとその日の旅程が開きます</span></div></div>
+    <div class="mc-card"><div class="mc-grid" id="monthGrid"></div><div class="mc-foot"><span id="monthNote"></span><span class="mc-key"><span class="mc-ok">✓</span> 予約済み　🛏 宿　<span class="desktop-cal-hint">日付を押すとその日の旅程が開きます</span><span class="mobile-cal-hint">日付を押すと下に予定を表示します</span></span></div><div id="monthAgenda" aria-live="polite"></div></div>
   </section>
 
   <section id="upcoming">
@@ -1303,16 +1376,17 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
 
 <div class="overlay" id="overlay" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
-    <h2 id="sheetTitle">旅を追加</h2>
+    <div class="sheet-head"><h2 id="sheetTitle">旅を追加</h2><button type="button" id="itinClose" aria-label="旅程を閉じる">✕ 閉じる</button></div>
     <div id="itinView" hidden></div>
     <form id="tripForm" hidden>
-      <div class="grid2">
-        <div class="field"><label for="t_place">行き先</label><input id="t_place" required placeholder="例：金沢"></div>
-        <div class="field"><label for="t_title">旅の名前（任意）</label><input id="t_title" placeholder="例：週末ひとり旅"></div>
-      </div>
+      <div class="field"><label for="t_place">行き先</label><input id="t_place" required placeholder="例：金沢"></div>
       <div class="grid2">
         <div class="field"><label for="t_start">出発日</label><input id="t_start" type="date" required></div>
         <div class="field"><label for="t_end">帰着日</label><input id="t_end" type="date" required></div>
+      </div>
+      <details id="tripExtras"><summary>旅の名前・予算・旅の記録（任意）</summary>
+      <div class="grid2">
+        <div class="field"><label for="t_title">旅の名前</label><input id="t_title" placeholder="例：週末ひとり旅"></div>
         <div class="field"><label for="t_budget">予算（円）</label><input id="t_budget" type="number" min="0" step="1" inputmode="numeric"></div>
       </div>
       <fieldset>
@@ -1333,11 +1407,12 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
       <div class="field"><label for="t_stay">良かった宿・泊まる宿</label><input id="t_stay"></div>
       <div class="field"><label for="t_eat">良かったごはん</label><input id="t_eat"></div>
       <div class="field"><label for="t_memo">ひとことメモ</label><textarea id="t_memo"></textarea></div>
+      </details>
       <button type="button" id="t_itin" class="itin-link" hidden>日ごとの旅程を編集 →</button>
       <div class="err" id="t_err" hidden></div>
       <div class="sheet-actions">
         <button type="button" class="danger" id="t_del" hidden>削除</button>
-        <div style="margin-left:auto"><button type="button" class="cancel">キャンセル</button><button type="submit" class="primary">保存</button></div>
+        <div style="margin-left:auto"><button type="button" class="cancel">キャンセル</button><button type="submit" id="t_next" class="primary">保存して初日の予定へ</button><button type="submit" id="t_save">旅だけ保存</button></div>
       </div>
     </form>
     <form id="wishForm" hidden>
@@ -1580,6 +1655,7 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
 
     const hasSamples = trips.some((t) => t.sample) || wishes.some((w) => w.sample);
     $("#clearSamples").hidden = !(hasSamples && canWrite);
+    $("#quickAdd").hidden = !canWrite || !tripsReady;
     $("#addTrip").hidden = !canWrite; $("#addWish").hidden = !canWrite;
   }
 
@@ -1624,7 +1700,48 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
     );
   }
 
+  function renderTravelNow() {
+    const panel = $("#travelNow"), now = new Date();
+    const today = now.getFullYear() + "-" + pad(now.getMonth()+1) + "-" + pad(now.getDate());
+    const active = trips.filter(t => t.start <= today && today <= t.end);
+    panel.hidden = !active.length;
+    panel.replaceChildren();
+    for (const t of active) {
+      const days = Array.isArray(t.days) ? t.days : [];
+      const tonight = days.find(d => d && d.date === today);
+      let next = null, nextTime = Infinity;
+      for (const [di, d] of days.entries()) {
+        if (!d || !validDate(d.date)) continue;
+        for (const [li, leg] of (d.legs || []).entries()) {
+          if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(leg.dep)) continue;
+          const stamp = d.date + "T" + leg.dep + ":00";
+          const zone = tzAt(leg.fromLL);
+          const utc = Date.parse(stamp + "Z");
+          const offset = zone && tzOffsetMin(zone, new Date(utc));
+          const time = offset == null ? Date.parse(stamp) : utc - offset * 60000;
+          if (time < now.getTime() - 59999 || time >= nextTime) continue;
+          next = {d, leg, di, li}; nextTime = time;
+        }
+      }
+      panel.append(el("h2", {text:t.title || t.place || "旅行中の予定"}));
+      if (next) {
+        const {d, leg, di, li} = next;
+        panel.append(el("strong", {text:"次の移動　" + jpDate(d.date) + " " + leg.dep + "　" + [leg.from, leg.to].filter(Boolean).join(" → ")}));
+        const actions = el("div", {class:"tools"});
+        if (leg.terminal) actions.append(el("span", {text:"乗り場　" + leg.terminal}));
+        if (leg.tickets?.[0]) actions.append(el("a", {href:blobUrl(leg.tickets[0].id),target:"_blank",rel:"noopener",text:"チケットを開く"}));
+        actions.append(el("button", {type:"button",text:"移動の詳細",onclick:() => openLeg(t, di, li)}));
+        panel.append(actions);
+      } else panel.append(el("span", {text:"この旅で、これからの出発時刻が登録された移動はありません。"}));
+      if (tonight?.stay || today < t.end) {
+        const stay = el("div", {text:"今夜の宿　" + (tonight?.stay || "未定")});
+        if (realStay(tonight)) stay.append(el("a", {href:mapUrl(stayQuery(tonight)),target:"_blank",rel:"noopener",text:"地図"}));
+        panel.append(stay);
+      }
+    }
+  }
   function renderMoves() {
+    renderTravelNow();
     const sec = $("#moves"), body = $("#movesBody");
     if (!tripsReady) { sec.hidden = true; return; }
     const tomorrowStr = addDays(todayStr, 1);
@@ -2283,7 +2400,7 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
   }
 
   // ---------- month calendar ----------
-  let calMonth = null;
+  let calMonth = null, agendaDate = null;
   function monthKey(ds) { return ds.slice(0, 7); }
   function shiftMonth(key, n) { const [y, m] = key.split("-").map(Number); const d = new Date(Date.UTC(y, m - 1 + n, 1)); return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1); }
   function renderMonthCal() {
@@ -2307,6 +2424,26 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
     const first = calMonth + "-01";
     const startDow = new Date(Date.UTC(y, m - 1, 1)).getUTCDay();
     const len = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    const dates = [...entries.keys()].filter(date => monthKey(date) === calMonth).sort();
+    if (!dates.includes(agendaDate)) agendaDate = dates.includes(todayStr) ? todayStr : dates[0];
+    const agenda = $("#monthAgenda");
+    const openEntry = ({t, di}) => {
+      openItin(t);
+      requestAnimationFrame(() => document.getElementById("day-" + di)?.scrollIntoView({block:"start"}));
+    };
+    function showAgenda(date) {
+      agendaDate = date;
+      const entry = entries.get(date);
+      agenda.replaceChildren();
+      if (!entry) return;
+      const d = entry.d || {};
+      agenda.append(el("strong", {text: jpDate(date) + "　" + (entry.t.title || entry.t.place)}));
+      for (const l of d.legs || []) agenda.append(el("div", {text: [l.dep || "時刻未定", [l.from, l.to].filter(Boolean).join(" → ")].join("　")}));
+      if (!d.legs?.length) agenda.append(el("div", {text: d.route || "移動予定は未登録です"}));
+      if (d.stay) agenda.append(el("div", {text: "宿　" + d.stay}));
+      agenda.append(el("button", {type:"button", text:"旅程を開く", onclick:() => openEntry(entry)}));
+    }
+    showAgenda(agendaDate);
     const cells = [];
     "日月火水木金土".split("").forEach((w, i) => cells.push(el("div", { class: "mc-dow" + (i === 0 ? " sun" : i === 6 ? " sat" : ""), text: w })));
     for (let i = 0; i < startDow; i++) cells.push(el("div", { class: "mc-cell mc-empty" }));
@@ -2332,7 +2469,12 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
         if (d.stay && d.stay !== "機内泊") kids.push(el("div", { class: "mc-stay" + (d.stayBooked ? " ok" : "") }, [el("span", { "aria-hidden": "true", text: "🛏" }), el("span", { text: d.stay })]));
         else if (!d.stay && ds < t.end) kids.push(el("div", { class: "mc-stay todo", text: "宿 未定" }));
         else if (d.stay === "機内泊") kids.push(el("div", { class: "mc-stay" }, [el("span", { "aria-hidden": "true", text: "💺" }), el("span", { text: "機内泊" })]));
-        const cell = el("button", { type: "button", class: "mc-cell on" + (ds < todayStr ? " past" : "") + (ds === todayStr ? " is-today" : "") + (startHere ? " s" : "") + (!(entries.get(nextD) && entries.get(nextD).t === t) ? " e" : ""), style: "--tc:" + tripColor(t), "aria-label": m + "月" + day + "日 " + (t.title || t.place) + " の旅程を開く", onclick: () => { openItin(t); requestAnimationFrame(() => { const target = e.di >= 0 ? document.getElementById("day-" + e.di) : null; if (target) target.scrollIntoView({ block: "start" }); }); } }, kids);
+        const cell = el("button", { type: "button", class: "mc-cell on" + (ds < todayStr ? " past" : "") + (ds === todayStr ? " is-today" : "") + (startHere ? " s" : "") + (!(entries.get(nextD) && entries.get(nextD).t === t) ? " e" : ""), style: "--tc:" + tripColor(t), "aria-label": m + "月" + day + "日 " + (t.title || t.place) + " の旅程を開く", "aria-pressed": String(ds === agendaDate), onclick: (event) => {
+          if (!matchMedia("(max-width:640px)").matches) { openEntry(e); return; }
+          $("#monthGrid [aria-pressed='true']")?.setAttribute("aria-pressed", "false");
+          event.currentTarget.setAttribute("aria-pressed", "true");
+          showAgenda(ds);
+        } }, kids);
         cells.push(cell);
       } else cells.push(el("div", { class: "mc-cell" + (ds === todayStr ? " is-today" : "") }, kids));
     }
@@ -2488,6 +2630,7 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
   }
 
   function openPlan(id, fresh) {
+    delete overlay.dataset.itinerary;
     const p = fresh || plans.find((x) => x._id === id); if (!p) return;
     const data = JSON.parse(JSON.stringify(p)); delete data._id;
     if (!Array.isArray(data.stops)) data.stops = [];
@@ -2892,12 +3035,32 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
   // ---------- forms ----------
   const overlay = $("#overlay");
   let editing = null, fromWish = null, delArmed = false;
+  let itineraryOpener = null;
+  function rememberItineraryOpener() {
+    itineraryOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  }
   function closeSheet() {
+    delete overlay.dataset.itinerary;
+    itinReturn = null; itinEdit = false;
     gridState = null;
-    if (planEdit) { const pe = planEdit; clearTimeout(planSaveTimer); planEdit = null; overlay.classList.remove("full"); db && db.doc("plans/" + pe.id).set(JSON.parse(JSON.stringify(Object.assign(pe.data, { updatedAt: new Date().toISOString() })))).catch(() => {}); } overlay.hidden = true; editing = null; fromWish = null; }
+    if (planEdit) { const pe = planEdit; clearTimeout(planSaveTimer); planEdit = null; overlay.classList.remove("full"); db && db.doc("plans/" + pe.id).set(JSON.parse(JSON.stringify(Object.assign(pe.data, { updatedAt: new Date().toISOString() })))).catch(() => {}); }
+    overlay.hidden = true; editing = null; fromWish = null;
+    if (itineraryOpener?.isConnected) itineraryOpener.focus({preventScroll:true});
+    itineraryOpener = null;
+  }
   const gridBusy = () => gridState && gridState.dirty;
-  overlay.addEventListener("click", (e) => { if (e.target === overlay && !gridBusy()) closeSheet(); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !overlay.hidden && !gridBusy()) closeSheet(); });
+  function dismissSheet() {
+    if (gridBusy() || savingTrip) return;
+    if (overlay.dataset.itinerary === "detail" && overlay.querySelector('form[data-changed="yes"]') &&
+        !window.confirm("編集した内容を保存せずに閉じますか？")) return;
+    closeSheet();
+  }
+  overlay.addEventListener("input", (e) => {
+    if (overlay.dataset.itinerary === "detail" && e.target.form) e.target.form.dataset.changed = "yes";
+  });
+  $("#itinClose").addEventListener("click", dismissSheet);
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) dismissSheet(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !overlay.hidden && !document.querySelector(".sa-modal")) dismissSheet(); });
   for (const b of document.querySelectorAll(".cancel")) b.addEventListener("click", closeSheet);
 
   function updateTotal() { const s = COSTS.reduce((a, k) => a + num($("#t_" + k).value), 0); $("#t_total").textContent = "合計 " + yen(s); }
@@ -3041,6 +3204,7 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
   const LEG_COLS = [["from", "出発地", "例：マドリード"], ["to", "到着地", "例：バレンシア"], ["mode", "手段・会社", "例：高速鉄道"], ["dep", "出発", "10:30"], ["arr", "到着", "12:34"], ["price", "料金", "円"]];
   const legSig = (l) => l ? [l.from, l.to, l.mode, l.dep, l.arr, num(l.price)].map((x) => String(x == null ? "" : x)).join("|") : "";
   function openItinGrid(t0, startDate) {
+    delete overlay.dataset.itinerary;
     const t = trips.find((x) => x._id === t0._id) || t0;
     const orig = JSON.parse(JSON.stringify((t.days || []).filter((d) => d && validDate(d.date)).sort((a, b) => a.date.localeCompare(b.date))));
     const byDate = new Map(orig.map((d) => [d.date, d]));
@@ -3292,6 +3456,8 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
     if (startDate) { const i = G.draft.findIndex((d) => d.date >= startDate); const r = i >= 0 && v.querySelector('.gr[data-di="' + i + '"]'); if (r) { const sh = $(".sheet"); sh.scrollTop += r.getBoundingClientRect().top - sh.getBoundingClientRect().top - 12; } }
   }
   function openItin(t) {
+    if (overlay.hidden) rememberItineraryOpener();
+    overlay.dataset.itinerary = "overview";
     t = trips.find((x) => x._id === t._id) || t;
     editing = null; fromWish = null;
     $("#sheetTitle").textContent = (t.title || t.place || "旅") + "の旅程";
@@ -3478,6 +3644,7 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
     } });
   }
   function openDay(t0, di) {
+    overlay.dataset.itinerary = "detail";
     const t = trips.find((x) => x._id === t0._id) || t0;
     itinReturn = di != null && t.days[di] ? { id: t._id, date: t.days[di].date } : null;
     const isNew = di == null;
@@ -3839,6 +4006,8 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
     ]);
   }
   function openLeg(t0, di, li, toForm) {
+    if (overlay.hidden) rememberItineraryOpener();
+    overlay.dataset.itinerary = "detail";
     const t = trips.find((x) => x._id === t0._id) || t0;
     const day = t.days[di], l = day.legs[li];
     itinReturn = { id: t._id, date: day.date, leg: li };
@@ -3969,6 +4138,7 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
     if (toForm) requestAnimationFrame(() => form.scrollIntoView({ block: "start" }));
   }
   function openTrip(t, wish) {
+    delete overlay.dataset.itinerary;
 
     editing = t && t._id ? t : null; fromWish = wish || null;
     overlay.classList.remove("full");
@@ -3983,6 +4153,10 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
     $("#t_rating").value = String(num(v.rating) || 0);
     $("#t_with").value = v.with || ""; $("#t_stay").value = v.stay || ""; $("#t_eat").value = v.eat || ""; $("#t_memo").value = v.memo || "";
     $("#t_err").hidden = true; updateTotal();
+    $("#tripExtras").open = !!editing;
+    $("#t_next").hidden = !!editing;
+    $("#t_save").textContent = editing ? "保存" : "旅だけ保存";
+    $("#t_save").classList.toggle("primary", !!editing);
     const del = $("#t_del"); del.hidden = !editing; armDelete(del, false);
     const ib = $("#t_itin");
     ib.hidden = !editing;
@@ -3990,6 +4164,7 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
     overlay.hidden = false; $("#t_place").focus();
   }
   function openWish(w) {
+    delete overlay.dataset.itinerary;
     editing = w && w._id ? w : null; fromWish = null;
     overlay.classList.remove("full");
     $("#sheetTitle").textContent = editing ? "行きたい場所を編集" : "行きたい場所を追加";
@@ -4002,6 +4177,10 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
     const del = $("#w_del"); del.hidden = !editing; armDelete(del, false);
     overlay.hidden = false; $("#w_place").focus();
   }
+  $("#quickAdd").addEventListener("click", (e) => {
+    const id = e.target.dataset.add;
+    if (id && canWrite) { $("#quickAdd").open = false; document.getElementById(id).click(); }
+  });
   $("#addTrip").addEventListener("click", () => openTrip(null));
   $("#t_itin").addEventListener("click", async () => {
     const t = editing; if (!t) return;
@@ -4022,9 +4201,10 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
       : "保存できませんでした。通信状況を確かめて、もう一度試してください。";
   }
 
+  let savingTrip = false;
   $("#tripForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (!db) return;
+    if (!db || savingTrip) return;
     const start = $("#t_start").value, end = $("#t_end").value;
     if (start && end && end < start) { const b = $("#t_err"); b.hidden = false; b.textContent = "帰着日は出発日より後にしてください。"; return; }
     const data = { place: $("#t_place").value.trim(), title: $("#t_title").value.trim(), start, end, budget: num($("#t_budget").value), rating: num($("#t_rating").value), with: $("#t_with").value.trim(), stay: $("#t_stay").value.trim(), eat: $("#t_eat").value.trim(), memo: $("#t_memo").value.trim(), sample: editing ? !!editing.sample : false, updatedAt: new Date().toISOString() };
@@ -4035,12 +4215,31 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
       data.days = editing.days.concat(extra).sort((a, b) => String(a.date).localeCompare(String(b.date)));
     }
     if (editing) for (const k of ["countries"]) if (editing[k] !== undefined) data[k] = editing[k];
+    const firstDay = !editing && e.submitter !== $("#t_save");
+    if (firstDay) data.days = blankDays(data);
+    const wishId = fromWish && fromWish._id;
+    savingTrip = true;
+    const submitters = Array.from(e.currentTarget.querySelectorAll("button"));
+    submitters.forEach(b => { b.disabled = true; });
     try {
-      if (editing) await db.doc("trips/" + editing._id).set(data);
-      else await db.collection("trips").add(data);
-      if (fromWish && fromWish._id) await db.doc("wishes/" + fromWish._id).update({ planned: true });
-      closeSheet();
+      let id = editing && editing._id;
+      if (id) await db.doc("trips/" + id).set(data);
+      else id = (await db.collection("trips").add(data)).id;
+      if (wishId) {
+        try { await db.doc("wishes/" + wishId).update({ planned: true }); }
+        catch { setStatus("旅は保存しました。行きたいリストへの反映に失敗しました。"); }
+      }
+      if (!overlay.hidden && !$("#tripForm").hidden) {
+        if (firstDay) {
+          const trip = Object.assign({ _id: id }, data);
+          if (!trips.some(t => t._id === id)) trips.push(trip);
+          itinEdit = true;
+          openDay(trip, 0);
+        }
+        else closeSheet();
+      }
     } catch (err) { showErr("#t_err", err); }
+    finally { savingTrip = false; submitters.forEach(b => { b.disabled = false; }); }
   });
   $("#wishForm").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -4072,6 +4271,8 @@ input[type=date],input[type=time]{width:100%;-webkit-appearance:none;appearance:
 
   $("#yearSel").addEventListener("change", (e) => { year = e.target.value === "all" ? "all" : Number(e.target.value); try { localStorage.setItem("tabicho-year", String(year)); } catch (err) {} render(); });
 
+  // Refresh departure times when the phone wakes up or the displayed minute changes.
+  setInterval(() => { if (!document.hidden && tripsReady && !$("#travelNow").contains(document.activeElement)) renderTravelNow(); }, 60000);
   // ---------- data ----------
   render();
   (async () => {
