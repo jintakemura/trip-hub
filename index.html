@@ -22,7 +22,11 @@
   const sb = (window.__sbFactory || window.supabase.createClient)(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   window.__sb = sb;
   const qs = new URLSearchParams(location.search);
-  const shareTok = qs.get("s");
+  const registering = qs.get("register") === "1";
+  const registrationUrl = location.origin + location.pathname + "?register=1";
+  const inviteCode = registering && /^#invite=([a-f0-9]{32})$/.exec(location.hash)?.[1] || "";
+  let canInvite = false;
+  const shareTok = registering ? null : qs.get("s");
   const shared = !!shareTok;
   let uid = null, email = "";
   let resolveReady; const ready = new Promise((r) => { resolveReady = r; });
@@ -40,6 +44,10 @@
   .sa-card{width:min(420px,100%);background:#fff;color:#18242c;border-radius:18px;padding:24px 20px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
   .sa-card h1{font-family:"Shippori Mincho B1",serif;font-size:34px;margin:0 0 4px}
   .sa-card p{margin:0 0 14px;color:#5b6a72;font-size:14px;line-height:1.6}
+  .sa-invitation{box-sizing:border-box;border:0;max-width:calc(100vw - 32px)}
+  .sa-invitation::backdrop{background:rgba(10,20,30,.45)}
+  .sa-invitation h2{margin:0 0 8px}
+  .sa-invitation .sa-hint{margin:10px 0}
   .sa-tabs{display:flex;gap:6px;margin:12px 0 14px}
   .sa-tabs button{flex:1;padding:9px;border-radius:10px;border:1px solid #d6dedd;background:#f2f4f3;font:inherit;font-size:14px;cursor:pointer;color:#18242c}
   .sa-tabs button[aria-pressed=true]{background:#18242c;color:#fff;border-color:#18242c}
@@ -80,7 +88,19 @@
     const m = h("div", { class: "sa-msg" + (ok ? " ok" : "") }, [msg || ""]);
     const say = (t, good) => { m.textContent = t || ""; m.className = "sa-msg" + (good ? " ok" : ""); };
     const card = h("div", { class: "sa-card" });
-    if (mode === "reset" || mode === "password") {
+    if (mode === "switch") {
+      card.append(h("h1", {text:"Trip HUB の新規登録"}),
+        h("p", {text:"このブラウザーではすでにログインしています。別の方が登録する場合は、その方の端末で招待リンクを開くか、アカウントを切り替えてください。"}),
+        h("button", {class:"go",text:"この端末で切り替えて新規登録",onclick:async e => {
+          const button = e.currentTarget;
+          button.disabled = true;
+          try {
+            const {error} = await sb.auth.signOut({scope:"local"});
+            if (error) throw error;
+            location.replace(registrationUrl + (inviteCode ? "#invite=" + inviteCode : ""));
+          } catch { button.disabled = false; say("切り替えられませんでした。もう一度お試しください。"); }
+        }}), m);
+    } else if (mode === "reset" || mode === "password") {
       const changing = mode === "password";
       const field = h("input", changing
         ? {id:"sa_new",type:"password",autocomplete:"new-password",minlength:"8",required:true}
@@ -108,21 +128,27 @@
       card.append(h("h1",{text:"パスワードの再設定"}),form,h("button",{class:"sa-btn",style:"margin-top:12px",text:"ログインに戻る",onclick:() => { recoverySession = false; showGate("login"); }}),m);
     } else if (mode === "invite") {
       const code = h("input", { id: "sa_code", autocomplete: "off", placeholder: "招待コード" });
+      code.value = inviteCode;
       const go = h("button", { class: "go", text: "はじめる", onclick: async () => {
         go.disabled = true; say("");
         const okk = await redeem(code.value.trim());
         go.disabled = false;
-        if (okk) { gate.remove(); gate = null; enter(); } else say("招待コードが違うか、使える人数を超えています。");
+        if (okk) { gate.remove(); gate = null; enter(); } else say("この招待コードは無効か使用済みです。招待した方に新しいリンクを依頼してください。");
       } });
-      card.append(h("h1", { text: "Trip HUB" }), h("p", { text: "最初に一度だけ、招待コードを入れてください。" }), h("label", { for: "sa_code", text: "招待コード" }), code, go,
+      card.append(h("h1", { text: "Trip HUB" }), h("p", { text: "ご自身のアカウントであることを確認し、招待コードで登録を完了してください。" }), h("label", { for: "sa_code", text: "招待コード" }), code, go,
         h("button", { class: "sa-btn", style: "margin-top:10px;width:100%", text: "別のアカウントでログイン", onclick: async () => { await sb.auth.signOut(); showGate("login"); } }), m);
     } else {
       let tab = mode === "signup" ? "signup" : "login";
       const body = h("div");
+      const heading = h("h1");
+      const intro = h("p");
       const draw = () => {
+        heading.textContent = tab === "signup" ? "自分の旅帳を作る" : "Trip HUB";
+        intro.textContent = tab === "signup" ? "ご自身のメールアドレスとパスワードで登録してください。招待した方の旅程や予約情報は共有されません。" : "行った旅の記録と、これからの計画と、いつか行きたい場所。";
         const em = h("input", { id: "sa_email", type: "email", autocomplete: "email", placeholder: "you@example.com" });
         const pw = h("input", { id: "sa_pw", type: "password", autocomplete: tab === "signup" ? "new-password" : "current-password", placeholder: tab === "signup" ? "8文字以上" : "" });
         const code = tab === "signup" ? h("input", { id: "sa_code", autocomplete: "off", placeholder: "知り合いから聞いたコード" }) : null;
+        if (code && inviteCode) code.value = inviteCode;
         const go = h("button", { class: "go", text: tab === "signup" ? "登録する" : "ログイン", onclick: async () => {
           const e = em.value.trim(), p = pw.value;
           if (!e || !p) return say("メールアドレスとパスワードを入れてください。");
@@ -133,6 +159,7 @@
               if (!c) { go.disabled = false; return say("招待コードを入れてください。"); }
               if (p.length < 8) { go.disabled = false; return say("パスワードは8文字以上にしてください。"); }
               LS.set("triphub-code", c);
+              LS.set("triphub-code-email", e.toLowerCase());
               const { data, error } = await sb.auth.signUp({ email: e, password: p, options: { emailRedirectTo: location.origin + location.pathname } });
               if (error) throw error;
               if (!data.session) { go.disabled = false; tab = "login"; draw(); return say("確認メールを送りました。メールのリンクを押してから、ここでログインしてください。", true); }
@@ -161,13 +188,18 @@
         [em, pw, code].forEach((x) => x && x.addEventListener("keydown", (ev) => { if (ev.key === "Enter") go.click(); }));
       };
       draw();
-      card.append(h("h1", { text: "Trip HUB" }), h("p", { text: "行った旅の記録と、これからの計画と、いつか行きたい場所。" }), body, m);
+      card.append(heading, intro, body, m);
     }
     gate = h("div", { class: "sa-gate" }, [card]);
     document.body.append(gate);
   }
-  async function isMember() { const { data } = await sb.from("members").select("user_id").eq("user_id", uid).maybeSingle(); return !!data; }
-  async function redeem(c) { if (!c) return false; const { data, error } = await sb.rpc("redeem_invite", { c }); if (!error && data === true) { LS.set("triphub-code", null); return true; } return false; }
+  async function isMember() {
+    const {data,error} = await sb.from("members").select("user_id,can_invite").eq("user_id", uid).maybeSingle();
+    if (error) throw error;
+    canInvite = data?.can_invite === true;
+    return !!data;
+  }
+  async function redeem(c) { if (!c) return false; const { data, error } = await sb.rpc("redeem_invite", { c }); if (!error && data === true) { LS.set("triphub-code", null); LS.set("triphub-code-email", null); return true; } return false; }
   async function afterLogin() {
     const { data } = await sb.auth.getSession();
     const s = data && data.session; if (!s) { showGate("login"); return; }
@@ -175,14 +207,19 @@
     const member = await isMember();
     if (recoverySession) { showGate("password"); return; }
     if (!member) {
-      const pending = LS.get("triphub-code");
+      const pendingEmail = LS.get("triphub-code-email");
+      const pending = (!pendingEmail || pendingEmail === email.toLowerCase()) && LS.get("triphub-code");
       if (!(pending && (await redeem(pending)))) { showGate("invite", pending ? "招待コードが違うか、使える人数を超えています。正しいコードを入れてください。" : ""); return; }
     }
     if (gate) { gate.remove(); gate = null; }
     enter();
   }
   let entered = false;
-  function enter() { if (entered) return; entered = true; drawAccount(); resolveReady(); }
+  function enter() {
+    if (entered) return;
+    if (registering) history.replaceState(null, "", location.pathname);
+    entered = true; drawAccount(); resolveReady();
+  }
 
   // ---------- account menu ----------
   function drawAccount() {
@@ -194,12 +231,44 @@
       file.addEventListener("change", async () => { const f = file.files[0]; if (!f) return; menu.remove(); menu = null; await importData(f); });
       menu = h("div", { class: "sa-menu" }, [
         h("div", { class: "who", text: email }),
+        canInvite ? h("button", {text:"知り合いを招待", onclick:() => { menu.remove(); menu = null; showRegistrationInvite(btn); }}) : null,
         h("label", {}, ["データを取り込む（JSONファイル）", file]),
         h("button", { text: "ログアウト", onclick: async () => { await sb.auth.signOut(); location.reload(); } }),
       ]);
       document.body.append(menu);
     } });
     document.body.append(h("div", { class: "sa-acct" }, [btn]));
+  }
+  function showRegistrationInvite(opener) {
+    const dialog = h("dialog", {class:"sa-card sa-invitation", "aria-labelledby":"sa_invite_title"});
+    const field = h("input", {id:"sa_invite_url",type:"url",readonly:true});
+    const status = h("p", {role:"status",class:"sa-hint"});
+    const copy = h("button", {class:"sa-btn",text:"招待リンクをコピー",onclick:async () => {
+      try { await navigator.clipboard.writeText(field.value); status.textContent = "コピーしました。登録する方にこのリンクをお渡しください。"; }
+      catch { field.focus(); field.select(); status.textContent = "選択したリンクをコピーしてください。"; }
+    }});
+    const result = h("div", {hidden:true}, [h("label", {for:field.id,text:"1人分の招待リンク"}), field, copy]);
+    const issue = h("button", {class:"go",text:"1人分の招待リンクを発行",onclick:async () => {
+      if (issue.disabled) return;
+      issue.disabled = true;
+      try {
+        const code = crypto.randomUUID().replace(/-/g,"");
+        const {error} = await sb.from("invite_codes").insert({code,uses_left:1});
+        if (error) throw error;
+        field.value = registrationUrl + "#invite=" + code;
+        result.hidden = false;
+        issue.hidden = true;
+        copy.focus();
+        status.textContent = "発行しました。このリンクは1人が登録すると使用済みになります。";
+      } catch {
+        issue.disabled = false; status.textContent = "発行できませんでした。接続を確認してもう一度お試しください。";
+      }
+    }});
+    dialog.append(h("h2", {id:"sa_invite_title",text:"知り合いを招待"}),
+      h("p", {text:"相手は自分のメールアドレスで登録し、空の旅帳から始めます。あなたの旅程やチケットは共有されません。"}),
+      issue,result,status,h("button", {class:"sa-btn",text:"閉じる",onclick:() => dialog.close()}));
+    dialog.addEventListener("close", () => { dialog.remove(); opener.focus(); }, {once:true});
+    document.body.append(dialog); dialog.showModal();
   }
   async function importData(f) {
     let j; try { j = JSON.parse(await f.text()); } catch (e) { alertBox("ファイルを読めませんでした。Trip HUB のデータファイルを選んでください。"); return; }
@@ -408,7 +477,17 @@
     }
     const { data } = await sb.auth.getSession();
     if (recoverySession) showGate("password");
-    else if (data && data.session) await afterLogin(); else showGate("login");
+    else if (registering && data?.session) {
+      uid = data.session.user.id; email = data.session.user.email || "";
+      try {
+        if (await isMember()) showGate("switch");
+        else showGate("invite", email + " で登録を完了します。", true);
+      } catch { showGate("switch","アカウントの状態を確認できませんでした。"); }
+    }
+    else if (data && data.session) {
+      try { await afterLogin(); } catch { showGate("login","登録状態を確認できませんでした。もう一度ログインしてください。"); }
+    }
+    else showGate(registering ? "signup" : "login");
   };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
 })();
