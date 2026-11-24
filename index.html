@@ -239,7 +239,7 @@
     } });
     document.body.append(h("div", { class: "sa-acct" }, [btn]));
   }
-  function showRegistrationInvite(opener) {
+  async function showRegistrationInvite(opener) {
     const dialog = h("dialog", {class:"sa-card sa-invitation", "aria-labelledby":"sa_invite_title"});
     const field = h("input", {id:"sa_invite_url",type:"url",readonly:true});
     const status = h("p", {role:"status",class:"sa-hint"});
@@ -247,28 +247,28 @@
       try { await navigator.clipboard.writeText(field.value); status.textContent = "コピーしました。登録する方にこのリンクをお渡しください。"; }
       catch { field.focus(); field.select(); status.textContent = "選択したリンクをコピーしてください。"; }
     }});
-    const result = h("div", {hidden:true}, [h("label", {for:field.id,text:"1人分の招待リンク"}), field, copy]);
-    const issue = h("button", {class:"go",text:"1人分の招待リンクを発行",onclick:async () => {
-      if (issue.disabled) return;
-      issue.disabled = true;
+    const result = h("div", {hidden:true}, [h("label", {for:field.id,text:"共通の招待リンク"}), field, copy]);
+    const retry = h("button", {class:"sa-btn",hidden:true,text:"もう一度読み込む",onclick:load});
+    async function load() {
+      retry.hidden = true;
+      status.textContent = "招待リンクを読み込み中…";
       try {
-        const code = crypto.randomUUID().replace(/-/g,"");
-        const {error} = await sb.from("invite_codes").insert({code,uses_left:1});
-        if (error) throw error;
-        field.value = registrationUrl + "#invite=" + code;
+        const {data,error} = await sb.from("invite_codes").select("code").eq("reusable",true).single();
+        if (error || !data?.code) throw new Error("invite unavailable");
+        field.value = registrationUrl + "#invite=" + encodeURIComponent(data.code);
         result.hidden = false;
-        issue.hidden = true;
-        copy.focus();
-        status.textContent = "発行しました。このリンクは1人が登録すると使用済みになります。";
+        status.textContent = "";
       } catch {
-        issue.disabled = false; status.textContent = "発行できませんでした。接続を確認してもう一度お試しください。";
+        status.textContent = "招待リンクを読み込めませんでした。";
+        retry.hidden = false;
       }
-    }});
+    }
     dialog.append(h("h2", {id:"sa_invite_title",text:"知り合いを招待"}),
-      h("p", {text:"相手は自分のメールアドレスで登録し、空の旅帳から始めます。あなたの旅程やチケットは共有されません。"}),
-      issue,result,status,h("button", {class:"sa-btn",text:"閉じる",onclick:() => dialog.close()}));
+      h("p", {text:"同じリンクを複数の方に送れます。登録した方はそれぞれ自分の空の旅帳から始めます。"}),
+      result,status,retry,h("button", {class:"sa-btn",text:"閉じる",onclick:() => dialog.close()}));
     dialog.addEventListener("close", () => { dialog.remove(); opener.focus(); }, {once:true});
     document.body.append(dialog); dialog.showModal();
+    await load();
   }
   async function importData(f) {
     let j; try { j = JSON.parse(await f.text()); } catch (e) { alertBox("ファイルを読めませんでした。Trip HUB のデータファイルを選んでください。"); return; }
